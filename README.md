@@ -18,10 +18,10 @@ You should use this model:
 
 Save public key:
 ```bash
-curl -X POST "https://now-8lgs40d3k.now.sh" -d '{"name":"Some.Name","key":"E7+TL112lj1GmJRHf9jT5MZJDgYIhUbtBLc4/ZFMZ5c="}'
+curl -X POST "https://pspk.now.sh" -d '{"name":"Some.Name","key":"E7+TL112lj1GmJRHf9jT5MZJDgYIhUbtBLc4/ZFMZ5c="}'
 ```
 
 Read public key:
 ```bash
-curl -X POST "https://now-8lgs40d3k.now.sh" -d '{"name":"Some.Name"}'
+curl -X POST "https://pspk.now.sh" -d '{"name":"Some.Name"}'
 ```
