@@ -29,6 +29,21 @@ type PspkStore struct {
 	Keys  map[string]pub
 }
 
+var body = `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{.Title}}</title>
+</head>
+<body>
+	{{range $k, $v := .Keys}}
+	<div>key: {{$k}}</div>
+	<div>val: {{base64 $v}}</div>
+	{{end}}
+</body>
+</html>`
+
 func Handler(w http.ResponseWriter, r *http.Request) {
 	var (
 		err  error
@@ -42,8 +57,15 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		lock.RLock()
 		defer lock.RUnlock()
-		tmpl := template.Must(template.ParseFiles("./index.html"))
-		err := tmpl.Execute(w, PspkStore{
+		tmpl, err := template.New("index").Funcs(template.FuncMap{
+			"base64": func(b []byte) string {
+				return base64.StdEncoding.EncodeToString(b)
+			},
+		}).Parse(body)
+		if err != nil {
+			resp["error"] = err.Error()
+		}
+		err = tmpl.Execute(w, PspkStore{
 			Title: "PSPK kv store",
 			Keys:  keys,
 		})
