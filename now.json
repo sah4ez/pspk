@@ -1,0 +1,8 @@
+{
+	"version": 2,
+	"name":" now",
+	"alias": "sah4ez.test",
+	"builds": [
+		{ "src": "*.go", "use": "@now/go", "config": { "maxLambdaSize": "10mb" } }
+	]
+}
