@@ -1,27 +1,38 @@
 package main
 
 import (
+	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"io"
+	"net"
 	"net/http"
 	"os"
 	"sync"
+	"time"
+
+	"github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
 )
 
 type pub []byte
 
 type Request struct {
-	Name string `json:"name"`
-	Key  string `json:"key,omitempty"`
+	Name string `json:"name" bson:"name"`
+	Key  string `json:"key,omitempty" bson:"key"`
 }
 
 var (
-	token = os.Getenv("ACCESS_TOKEN")
+	token   = os.Getenv("ACCESS_TOKEN")
+	user    = os.Getenv("DB_USER")
+	pass    = os.Getenv("DB_PASS")
+	addr    = fmt.Sprintf("mongodb://%s:%s@pspk0-shard-00-00-bwu6c.azure.mongodb.net:27017,pspk0-shard-00-01-bwu6c.azure.mongodb.net:27017,pspk0-shard-00-02-bwu6c.azure.mongodb.net:27017/admin", user, pass)
+	session *mgo.Session
+	once    = &sync.Once{}
 
-	lock = sync.RWMutex{}
-	keys = make(map[string]pub)
+	errKeyNotFound = fmt.Errorf("key not found")
 )
 
 type PspkStore struct {
@@ -50,13 +61,13 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		resp = make(map[string]interface{})
 	)
 
+	once.Do(func() { initConnection(w, resp) })
+
 	value := r.Header.Get("X-Access-Token")
 
 	resp["access"] = value == token
 
 	if r.Method == http.MethodGet {
-		lock.RLock()
-		defer lock.RUnlock()
 		tmpl, err := template.New("index").Funcs(template.FuncMap{
 			"base64": func(b []byte) string {
 				return base64.StdEncoding.EncodeToString(b)
@@ -65,6 +76,14 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			resp["error"] = err.Error()
 		}
+
+		keys, err := Load()
+		if err != nil {
+			resp["error"] = err.Error()
+			json.NewEncoder(w).Encode(resp)
+			return
+		}
+
 		err = tmpl.Execute(w, PspkStore{
 			Title: "PSPK kv store",
 			Keys:  keys,
@@ -97,43 +116,141 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		lock.Lock()
-		defer lock.Unlock()
-
 		if keyRequest.Key == "" {
-			key, ok := keys[keyRequest.Name]
-			if ok {
-				resp["key"] = base64.StdEncoding.EncodeToString(key)
-			} else {
-				err = fmt.Errorf("name %s not found", keyRequest.Name)
-				w.WriteHeader(http.StatusNotFound)
-				return
-			}
-		} else {
-			_, ok := keys[keyRequest.Name]
-			if ok {
-				err = fmt.Errorf("name %s is exist", keyRequest.Name)
-				w.WriteHeader(http.StatusBadRequest)
-				return
-			} else {
-				var b pub
-				b, err = base64.StdEncoding.DecodeString(keyRequest.Key)
-				if err != nil {
+			key, err := ByName(keyRequest.Name)
+			if err != nil {
+				if err == errKeyNotFound {
+					w.WriteHeader(http.StatusNotFound)
 					return
 				}
-
-				if len(b) != 32 {
-					err = fmt.Errorf("should be 32-bytes key")
-					w.WriteHeader(http.StatusBadRequest)
-					return
-				}
-
-				keys[keyRequest.Name] = b
-				resp["msg"] = "added"
-
-				w.WriteHeader(http.StatusCreated)
+				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
+			resp["key"] = key.Key
+			return
 		}
+
+		err = PutKey(keyRequest)
+		if mgo.IsDup(err) {
+			err = fmt.Errorf("name %s is exist", keyRequest.Name)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		resp["msg"] = "added"
+
+		w.WriteHeader(http.StatusCreated)
+		return
 	}
+}
+
+func PutKey(p Request) (err error) {
+	sess := session.Copy()
+	defer sess.Close()
+
+	c := sess.DB("pspk").C("keys")
+
+	var b pub
+	b, err = base64.StdEncoding.DecodeString(p.Key)
+	if err != nil {
+		return
+	}
+
+	if len(b) != 32 {
+		return fmt.Errorf("should be 32-bytes key")
+	}
+
+	return c.Insert(&p)
+}
+
+func ByName(name string) (p Request, err error) {
+	sess := session.Copy()
+	defer sess.Close()
+
+	c := sess.DB("pspk").C("keys")
+
+	p = Request{}
+
+	err = c.Find(bson.M{"name": name}).All(&p)
+	if err != nil {
+		if err == mgo.ErrNotFound {
+			return Request{}, errKeyNotFound
+		}
+		return
+	}
+
+	return
+}
+
+func Load() (keys map[string]pub, err error) {
+	keys = map[string]pub{}
+	sess := session.Copy()
+	defer sess.Close()
+
+	c := sess.DB("pspk").C("keys")
+
+	result := []Request{}
+
+	err = c.Find(bson.M{}).All(&result)
+	if err != nil {
+		return
+	}
+
+	for _, k := range result {
+		b, err := base64.StdEncoding.DecodeString(k.Key)
+		if err != nil {
+			keys[k.Name] = pub{}
+			continue
+		}
+		keys[k.Name] = b
+	}
+
+	return
+}
+
+func initConnection(w io.Writer, resp map[string]interface{}) {
+	dialInfo, err := mgo.ParseURL(addr)
+	if err != nil {
+		resp["error"] = err.Error()
+		resp["cause"] = "parse"
+		json.NewEncoder(w).Encode(resp)
+		return
+	}
+
+	dialInfo.Timeout = 5 * time.Second
+
+	dialInfo.DialServer = func(addr *mgo.ServerAddr) (net.Conn, error) {
+		tlsConfig := &tls.Config{}
+		conn, err := tls.Dial("tcp", addr.String(), tlsConfig)
+
+		if err != nil {
+			resp["error"] = err.Error()
+			resp["cause"] = "dial func"
+			json.NewEncoder(w).Encode(resp)
+		}
+		return conn, err
+	}
+
+	session, err = mgo.DialWithInfo(dialInfo)
+	if err != nil {
+		resp["error"] = err.Error()
+		resp["cause"] = "dial"
+		json.NewEncoder(w).Encode(resp)
+		return
+	}
+
+	c := session.DB("pspk").C("keys")
+	err = c.EnsureIndex(mgo.Index{Key: []string{"name"}, Unique: true})
+	if err != nil {
+		resp["error"] = err.Error()
+		resp["cause"] = "create index"
+		json.NewEncoder(w).Encode(resp)
+		return
+	}
+
 }
