@@ -28,7 +28,8 @@ var (
 	token   = os.Getenv("ACCESS_TOKEN")
 	user    = os.Getenv("DB_USER")
 	pass    = os.Getenv("DB_PASS")
-	addr    = fmt.Sprintf("mongodb://%s:%s@pspk0-shard-00-00-bwu6c.azure.mongodb.net:27017,pspk0-shard-00-01-bwu6c.azure.mongodb.net:27017,pspk0-shard-00-02-bwu6c.azure.mongodb.net:27017/admin", user, pass)
+	hosts   = os.Getenv("DB_HOSTS")
+	addr    = fmt.Sprintf("mongodb://%s:%s@%s/admin", user, pass, hosts)
 	session *mgo.Session
 	once    = &sync.Once{}
 

@@ -1,8 +1,8 @@
-## Public store public key
+## Public storage public key
 
-Simple in-memory public store public key.
+Simple in-memory public storage public key.
 
-HTTP-base key-value store.
+HTTP-base key-value storage.
 
 ## Model
 
