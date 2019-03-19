@@ -1,8 +1,15 @@
 {
 	"version": 2,
-	"name":" now",
-	"alias": "sah4ez.test",
-	"builds": [
-		{ "src": "*.go", "use": "@now/go", "config": { "maxLambdaSize": "10mb" } }
-	]
+	"name":" pspk",
+	"builds": [{ "src": "*.go", "use": "@now/go", "config": { "maxLambdaSize": "10mb" }}],
+	"build": {
+		"env": {
+			"GO111MODULE": "on"
+		}
+	},
+	"env":{
+		"DB_USER": "@mongo-name",
+		"DB_PASS": "@mongo-pass",
+		"DB_HOSTS": "@mongo-hosts"
+	}
 }
