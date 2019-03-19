@@ -76,6 +76,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		}).Parse(body)
 		if err != nil {
 			resp["error"] = err.Error()
+			return
 		}
 
 		keys, err := Load()
