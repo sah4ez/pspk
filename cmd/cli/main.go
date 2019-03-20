@@ -87,7 +87,7 @@ func main() {
 			Aliases: []string{"s"},
 			Usage:   `Generate shared secret key by private and public keys from pspk by name`,
 			Action: func(c *cli.Context) error {
-				pubName := c.Args().Get(1)
+				pubName := c.Args().Get(0)
 				name := c.GlobalString("name")
 				if name == "" {
 					return fmt.Errorf("name can't be empty")
