@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/sah4ez/pspk/pkg/keys"
+	"github.com/sah4ez/pspk/pkg/pspk"
 	"github.com/sah4ez/pspk/pkg/utils"
 	"github.com/urfave/cli"
 )
@@ -19,25 +20,50 @@ func main() {
 	var (
 		err error
 	)
+
+	var api pspk.PSPK
+	{
+		api = pspk.New(baseURL)
+	}
+
 	app := cli.NewApp()
 	app.Name = "pspk"
 	app.Version = "0.0.1"
 	app.Description = "Console tool for encyption/decription data through pspk.now.sh"
+
+	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:  "name",
+			Usage: "key name",
+		},
+	}
+
 	app.Commands = []cli.Command{
 		{
-			Name:    "generate",
-			Usage:   `Generate x25519 pair`,
+			Name:    "publish",
+			Usage:   `Generate x25519 pair to pspk`,
 			Aliases: []string{"g"},
 			Action: func(c *cli.Context) error {
+				name := c.GlobalString("name")
+				if name == "" {
+					return fmt.Errorf("name can't be empty")
+				}
+				path := "./" + name
+
 				pub, priv, err := keys.GenereateDH()
 				if err != nil {
 					return err
 				}
-				err = utils.Write("./", "pub.bin", pub[:])
+				err = utils.Write(path, "pub.bin", pub[:])
 				if err != nil {
 					return err
 				}
-				err = utils.Write(".", "key.bin", priv[:])
+				err = api.Publish(name, pub[:])
+				if err != nil {
+					return err
+				}
+
+				err = utils.Write(path, "key.bin", priv[:])
 				if err != nil {
 					return err
 				}
@@ -48,25 +74,29 @@ func main() {
 		},
 		{
 			Name:  "secret",
-			Usage: `Generate shared secret key by private and public keys`,
+			Usage: `Generate shared secret key by private and public keys from pspk by name`,
 			Action: func(c *cli.Context) error {
-				privPath := c.Args().Get(0)
-				pubPath := c.Args().Get(1)
-				priv, err := utils.ReadPath(privPath)
+				pubName := c.Args().Get(1)
+				name := c.GlobalString("name")
+				if name == "" {
+					return fmt.Errorf("name can't be empty")
+				}
+				path := "./" + name
+
+				priv, err := utils.Read(path, "key.bin")
 				if err != nil {
 					return err
 				}
-				pub, err := utils.ReadPath(pubPath)
+				pub, err := api.Load(pubName)
 				if err != nil {
 					return err
 				}
 				dh := keys.Secret(priv, pub)
 				fmt.Println("secret:", base64.StdEncoding.EncodeToString(dh))
-				if len(c.Args()) == 3 {
-					err = utils.Write("./", c.Args().Get(2), dh[:])
-					if err != nil {
-						return err
-					}
+
+				err = utils.Write(path, "secret", dh[:])
+				if err != nil {
+					return err
 				}
 				return nil
 			},
@@ -75,12 +105,24 @@ func main() {
 			Name:  "encrypt",
 			Usage: `Encrypt input message with shared key`,
 			Action: func(c *cli.Context) error {
-				key := c.Args()[0]
+				pubName := c.Args()[0]
 				message := c.Args()[1:]
-				chain, err := utils.Read("./", key)
+				name := c.GlobalString("name")
+				if name == "" {
+					return fmt.Errorf("name can't be empty")
+				}
+				path := "./" + name
+
+				priv, err := utils.Read(path, "key.bin")
 				if err != nil {
 					return err
 				}
+				pub, err := api.Load(pubName)
+				if err != nil {
+					return err
+				}
+				chain := keys.Secret(priv, pub)
+
 				messageKey, err := keys.LoadMaterialKey(chain)
 				if err != nil {
 					return err
@@ -98,12 +140,23 @@ func main() {
 			Name:  "decrypt",
 			Usage: `Decrypt input message with shared key`,
 			Action: func(c *cli.Context) error {
-				key := c.Args()[0]
-				message := c.Args()[1]
-				chain, err := utils.Read("./", key)
+				pubName := c.Args().Get(0)
+				message := c.Args().Get(1)
+				name := c.GlobalString("name")
+				if name == "" {
+					return fmt.Errorf("name can't be empty")
+				}
+				path := "./" + name
+
+				priv, err := utils.Read(path, "key.bin")
 				if err != nil {
 					return err
 				}
+				pub, err := api.Load(pubName)
+				if err != nil {
+					return err
+				}
+				chain := keys.Secret(priv, pub)
 				messageKey, err := keys.LoadMaterialKey(chain)
 				if err != nil {
 					return err

@@ -178,7 +178,7 @@ func ByName(name string) (p Request, err error) {
 
 	p = Request{}
 
-	err = c.Find(bson.M{"name": name}).All(&p)
+	err = c.Find(bson.M{"name": name}).One(&p)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return Request{}, errKeyNotFound
