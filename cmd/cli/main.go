@@ -16,6 +16,15 @@ const (
 	baseURL = "https://pspk.now.sh"
 )
 
+var (
+	//Version current tools
+	Version string
+	// Hash revision number from git
+	Hash string
+	// BuildDate when building this utilitites
+	BuildDate string
+)
+
 func main() {
 	var (
 		err error
@@ -28,7 +37,8 @@ func main() {
 
 	app := cli.NewApp()
 	app.Name = "pspk"
-	app.Version = "0.0.1"
+	app.Version = Version + "." + Hash
+	app.Metadata = map[string]interface{}{"builded": BuildDate}
 	app.Description = "Console tool for encyption/decription data through pspk.now.sh"
 
 	app.Flags = []cli.Flag{
@@ -42,7 +52,7 @@ func main() {
 		{
 			Name:    "publish",
 			Usage:   `Generate x25519 pair to pspk`,
-			Aliases: []string{"g"},
+			Aliases: []string{"p"},
 			Action: func(c *cli.Context) error {
 				name := c.GlobalString("name")
 				if name == "" {
@@ -73,8 +83,9 @@ func main() {
 			},
 		},
 		{
-			Name:  "secret",
-			Usage: `Generate shared secret key by private and public keys from pspk by name`,
+			Name:    "secret",
+			Aliases: []string{"s"},
+			Usage:   `Generate shared secret key by private and public keys from pspk by name`,
 			Action: func(c *cli.Context) error {
 				pubName := c.Args().Get(1)
 				name := c.GlobalString("name")
@@ -102,8 +113,9 @@ func main() {
 			},
 		},
 		{
-			Name:  "encrypt",
-			Usage: `Encrypt input message with shared key`,
+			Name:    "encrypt",
+			Aliases: []string{"e"},
+			Usage:   `Encrypt input message with shared key`,
 			Action: func(c *cli.Context) error {
 				pubName := c.Args()[0]
 				message := c.Args()[1:]
@@ -137,8 +149,9 @@ func main() {
 			},
 		},
 		{
-			Name:  "decrypt",
-			Usage: `Decrypt input message with shared key`,
+			Name:    "decrypt",
+			Aliases: []string{"d"},
+			Usage:   `Decrypt input message with shared key`,
 			Action: func(c *cli.Context) error {
 				pubName := c.Args().Get(0)
 				message := c.Args().Get(1)

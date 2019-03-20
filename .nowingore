@@ -2,3 +2,4 @@ bin
 cmd
 pkg
 vendor
+_build
