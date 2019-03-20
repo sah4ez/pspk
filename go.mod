@@ -1,4 +1,4 @@
-module github.com/sah4ez/now
+module github.com/sah4ez/pspk
 
 go 1.12
 

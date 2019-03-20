@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/sah4ez/pspk/pkg/keys"
 	"github.com/sah4ez/pspk/pkg/utils"
 	"github.com/urfave/cli"
 )
@@ -78,9 +79,9 @@ func main() {
 				message := c.Args()[1:]
 				chain, err := utils.Read("./", key)
 				if err != nil {
-					return nil, err
+					return err
 				}
-				messageKey, err := keys.LoadMateriaKey(chain)
+				messageKey, err := keys.LoadMaterialKey(chain)
 				if err != nil {
 					return err
 				}
@@ -98,12 +99,12 @@ func main() {
 			Usage: `Decrypt input message with shared key`,
 			Action: func(c *cli.Context) error {
 				key := c.Args()[0]
-				message := c.Args()[1:]
+				message := c.Args()[1]
 				chain, err := utils.Read("./", key)
 				if err != nil {
-					return nil, err
+					return err
 				}
-				messageKey, err := keys.LoadMateriaKey(chain)
+				messageKey, err := keys.LoadMaterialKey(chain)
 				if err != nil {
 					return err
 				}
