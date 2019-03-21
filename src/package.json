@@ -1,0 +1,15 @@
+{
+  "name": "pspk",
+  "version": "0.0.3",
+  "description": "javascript pspk impementation",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "sah4ez",
+  "license": "MIT",
+  "devDependencies": {
+    "elliptic": "^6.4.1"
+  }
+}
