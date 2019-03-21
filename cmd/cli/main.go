@@ -6,6 +6,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/sah4ez/pspk/pkg/config"
+	"github.com/sah4ez/pspk/pkg/evnironment"
 	"github.com/sah4ez/pspk/pkg/keys"
 	"github.com/sah4ez/pspk/pkg/pspk"
 	"github.com/sah4ez/pspk/pkg/utils"
@@ -35,18 +37,23 @@ func main() {
 		api = pspk.New(baseURL)
 	}
 
+	cfg, err := config.Load()
+	if err != nil {
+		fmt.Println("load config", err.Error())
+		return
+	}
+	path := environment.LoadDataPath()
+
 	app := cli.NewApp()
 	app.Name = "pspk"
 	app.Version = Version + "." + Hash
 	app.Metadata = map[string]interface{}{"builded": BuildDate}
 	app.Description = "Console tool for encyption/decription data through pspk.now.sh"
-
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "name",
 			Usage: "key name",
-		},
-	}
+		}}
 
 	app.Commands = []cli.Command{
 		{
@@ -56,9 +63,12 @@ func main() {
 			Action: func(c *cli.Context) error {
 				name := c.GlobalString("name")
 				if name == "" {
-					return fmt.Errorf("name can't be empty")
+					if cfg.CurrentName == "" {
+						return fmt.Errorf("empty current name, set to config or use --name")
+					}
+					name = cfg.CurrentName
 				}
-				path := "./" + name
+				path = path + "/" + name
 
 				pub, priv, err := keys.GenereateDH()
 				if err != nil {
@@ -90,9 +100,12 @@ func main() {
 				pubName := c.Args().Get(0)
 				name := c.GlobalString("name")
 				if name == "" {
-					return fmt.Errorf("name can't be empty")
+					if cfg.CurrentName == "" {
+						return fmt.Errorf("empty current name, set to config or use --name")
+					}
+					name = cfg.CurrentName
 				}
-				path := "./" + name
+				path = path + "/" + name
 
 				priv, err := utils.Read(path, "key.bin")
 				if err != nil {
@@ -103,9 +116,9 @@ func main() {
 					return err
 				}
 				dh := keys.Secret(priv, pub)
-				fmt.Println("secret:", base64.StdEncoding.EncodeToString(dh))
+				fmt.Println(base64.StdEncoding.EncodeToString(dh))
 
-				err = utils.Write(path, "secret", dh[:])
+				err = utils.Write(path, pubName+".secret.bin", dh[:])
 				if err != nil {
 					return err
 				}
@@ -121,9 +134,12 @@ func main() {
 				message := c.Args()[1:]
 				name := c.GlobalString("name")
 				if name == "" {
-					return fmt.Errorf("name can't be empty")
+					if cfg.CurrentName == "" {
+						return fmt.Errorf("empty current name, set to config or use --name")
+					}
+					name = cfg.CurrentName
 				}
-				path := "./" + name
+				path = path + "/" + name
 
 				priv, err := utils.Read(path, "key.bin")
 				if err != nil {
@@ -144,7 +160,7 @@ func main() {
 				if err != nil {
 					return err
 				}
-				fmt.Println("encrypted:", base64.StdEncoding.EncodeToString(b))
+				fmt.Println(base64.StdEncoding.EncodeToString(b))
 				return nil
 			},
 		},
@@ -157,9 +173,12 @@ func main() {
 				message := c.Args().Get(1)
 				name := c.GlobalString("name")
 				if name == "" {
-					return fmt.Errorf("name can't be empty")
+					if cfg.CurrentName == "" {
+						return fmt.Errorf("empty current name, set to config or use --name")
+					}
+					name = cfg.CurrentName
 				}
-				path := "./" + name
+				path = path + "/" + name
 
 				priv, err := utils.Read(path, "key.bin")
 				if err != nil {
@@ -183,8 +202,20 @@ func main() {
 				if err != nil {
 					return err
 				}
-				fmt.Println("decoded:", string(b))
+				fmt.Println(string(b))
 				return nil
+			},
+		},
+		{
+			Name:  "use-current",
+			Usage: `Set currnet name by default`,
+			Action: func(c *cli.Context) error {
+				name := c.GlobalString("name")
+				if name == "" {
+					return fmt.Errorf("empty name use  --name")
+				}
+				cfg.CurrentName = name
+				return cfg.Save()
 			},
 		},
 	}
