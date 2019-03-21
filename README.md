@@ -45,3 +45,13 @@ Will decription message through your private key and public key name from pspk.n
 ```bash
 pspk --name <NAME_YOUR_KEY> decrypt <PUBLIC_PART> <SOME_BASE64_WITH_SPACES>
 ```
+
+## pspk config
+
+pspk use `$XDG_CONFIG_HOME` for saving configuration or default value `$HOME/.config/pspk`
+Use `config.json` file for saving configuration:
+```
+{"current_name":"name"}
+```
+
+Also pspk use `$XDG_DATA_HOME` for saving appication data ro default value `$HOME/.local/share/pspk`
