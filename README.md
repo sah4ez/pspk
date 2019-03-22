@@ -82,6 +82,8 @@ pspk --name alice ephemeral-encrypt-group base Super secret message
 pspk --name bob ephemeral-decryp-group base base64
 ```
 
+**NOTE** All intermediate secrets would saved in pspk storage!
+
 ## pspk config
 
 pspk use `$XDG_CONFIG_HOME` for saving configuration or default value `$HOME/.config/pspk`
