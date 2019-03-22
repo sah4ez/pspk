@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/sah4ez/pspk/pkg/config"
-	"github.com/sah4ez/pspk/pkg/evnironment"
+	environment "github.com/sah4ez/pspk/pkg/evnironment"
 	"github.com/sah4ez/pspk/pkg/keys"
 	"github.com/sah4ez/pspk/pkg/pspk"
 	"github.com/sah4ez/pspk/pkg/utils"
@@ -165,6 +165,38 @@ func main() {
 			},
 		},
 		{
+			Name:    "ephemeral-encrypt",
+			Aliases: []string{"ee"},
+			Usage:   `Encrypt input message with ephemeral key`,
+			Action: func(c *cli.Context) error {
+				pubName := c.Args()[0]
+				message := c.Args()[1:]
+
+				pubEphemeral, privEphemeral, err := keys.GenereateDH()
+				if err != nil {
+					return err
+				}
+				pub, err := api.Load(pubName)
+				if err != nil {
+					return err
+				}
+				chain := keys.Secret(privEphemeral[:], pub)
+
+				messageKey, err := keys.LoadMaterialKey(chain)
+				if err != nil {
+					return err
+				}
+
+				b, err := utils.Encrypt(messageKey[64:], messageKey[:32], []byte(strings.Join(message, " ")))
+				if err != nil {
+					return err
+				}
+				m := append(pubEphemeral[:], b...)
+				fmt.Println(base64.StdEncoding.EncodeToString(m))
+				return nil
+			},
+		},
+		{
 			Name:    "decrypt",
 			Aliases: []string{"d"},
 			Usage:   `Decrypt input message with shared key`,
@@ -199,6 +231,43 @@ func main() {
 				}
 
 				b, err := utils.Decrypt(messageKey[64:], messageKey[:32], bytesMessage)
+				if err != nil {
+					return err
+				}
+				fmt.Println(string(b))
+				return nil
+			},
+		},
+		{
+			Name:    "ephemeral-decrypt",
+			Aliases: []string{"ed"},
+			Usage:   `Decrypt input message with ephemral shared key`,
+			Action: func(c *cli.Context) error {
+				message := c.Args().Get(0)
+				name := c.GlobalString("name")
+				if name == "" {
+					if cfg.CurrentName == "" {
+						return fmt.Errorf("empty current name, set to config or use --name")
+					}
+					name = cfg.CurrentName
+				}
+				path = path + "/" + name
+
+				priv, err := utils.Read(path, "key.bin")
+				if err != nil {
+					return err
+				}
+				bytesMessage, err := base64.StdEncoding.DecodeString(message)
+				if err != nil {
+					return err
+				}
+				chain := keys.Secret(priv, bytesMessage[:32])
+				messageKey, err := keys.LoadMaterialKey(chain)
+				if err != nil {
+					return err
+				}
+
+				b, err := utils.Decrypt(messageKey[64:], messageKey[:32], bytesMessage[32:])
 				if err != nil {
 					return err
 				}
