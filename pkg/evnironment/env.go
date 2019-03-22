@@ -6,12 +6,12 @@ var (
 	defaultDataPath   = os.Getenv("HOME") + "/.local/share"
 	defaultConfigPath = os.Getenv("HOME") + "/.config"
 	name              = "/pspk"
-	mode              = 0666
+	mode              = os.FileMode(0766)
 )
 
 func LoadDataPath() (path string) {
 	defer func() {
-		_ = os.Mkdir(path, os.ModeDir)
+		_ = os.Mkdir(path, mode)
 	}()
 	env, ok := os.LookupEnv("XDG_DATA_HOME")
 	if !ok {
@@ -22,7 +22,7 @@ func LoadDataPath() (path string) {
 
 func LoadConfigPath() (path string) {
 	defer func() {
-		_ = os.Mkdir(path, os.ModeDir)
+		_ = os.Mkdir(path, mode)
 	}()
 	env, ok := os.LookupEnv("XDG_CONFIG_HOME")
 	if !ok {
