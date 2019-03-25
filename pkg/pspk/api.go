@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"unicode/utf8"
 )
 
 type PSPK interface {
@@ -28,6 +29,9 @@ func New(basePath string) *pspk {
 }
 
 func (p *pspk) Publish(name string, key []byte) error {
+	if err := checkLimitNameLen(name); err != nil {
+		return err
+	}
 	body := struct {
 		Name string `json:"name"`
 		Key  string `json:"key"`
@@ -53,6 +57,9 @@ func (p *pspk) Publish(name string, key []byte) error {
 }
 
 func (p *pspk) Load(name string) ([]byte, error) {
+	if err := checkLimitNameLen(name); err != nil {
+		return nil, err
+	}
 	body := struct {
 		Name string `json:"name"`
 	}{
@@ -92,4 +99,11 @@ func (p *pspk) Load(name string) ([]byte, error) {
 
 func (p *pspk) Link([]byte) (string, error) {
 	return "", fmt.Errorf("not implemented")
+}
+
+func checkLimitNameLen(name string) error {
+	if utf8.RuneCountInString(name) > 1000 {
+		return fmt.Errorf("limit up to 1000 sign for name of key")
+	}
+	return nil
 }
