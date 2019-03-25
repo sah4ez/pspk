@@ -6,7 +6,7 @@ GO=GO111MOUDLE=on go
 
 
 build:
-	VERSION=$(VERSION)-dev	$(GO) build $(LDFLAGS) -o bin/${NAME} ./cmd/cli/main.go
+	VERSION=$(VERSION)-dev	$(GO) build $(LDFLAGS) -o bin/${NAME} ./cmd/cli/
 
 release: clean
 	mkdir -p _build
