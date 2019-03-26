@@ -63,6 +63,14 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		resp = make(map[string]interface{})
 	)
 
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+
+	if r.Method == "OPTIONS" {
+		return
+	}
+
 	once.Do(func() { initConnection(w, resp) })
 
 	value := r.Header.Get("X-Access-Token")
