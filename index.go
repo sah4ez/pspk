@@ -15,6 +15,7 @@ import (
 
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
+	"github.com/sah4ez/pspk/pkg/pspk"
 )
 
 type pub []byte
@@ -114,6 +115,11 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 		if keyRequest.Key == "" && keyRequest.Name == "" {
 			err = fmt.Errorf("not set values")
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		if err = pspk.CheckLimitNameLen(keyRequest.Name); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
