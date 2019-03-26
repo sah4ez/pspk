@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+            android:orientation=    "vertical"
+            android:layout_width=    "match_parent"
+            android:layout_height=    "match_parent"
+            android:layout_weight=    "1"
+            android:id="@+id/getLayout" >
+        <TextView
+                android:text=    "Name:"
+                android:textSize=    "15pt"
+                android:layout_width=    "match_parent"
+                android:layout_height=    "wrap_content"
+                android:layout_weight=    "1"    />
+        <EditText
+                android:id="@+id/edittext_getByName"
+                android:layout_width="match_parent"
+                android:imeOptions="actionGo"
+                android:inputType="text"
+                android:layout_height="wrap_content" />
+        <TextView
+                android:text=    "Key:"
+                android:textSize=    "15pt"
+                android:layout_width=    "match_parent"
+                android:layout_height=    "wrap_content"
+                android:layout_weight=    "1"    />
+        <EditText
+                android:id="@+id/edittext_getByKey"
+                android:layout_width="match_parent"
+                android:imeOptions="actionGo"
+                android:inputType="text"
+                android:layout_height="wrap_content" />
+        <Button
+                android:id="@+id/buttonGet"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/GET"
+                android:padding="10dp"/>
+        <Button
+                android:id="@+id/buttonSet"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/SET"
+                android:padding="10dp"/>
+    </LinearLayout>
+</LinearLayout>
