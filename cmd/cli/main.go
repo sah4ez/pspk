@@ -35,6 +35,7 @@ func init() {
 	api = pspk.New(baseURL)
 	app = cli.NewApp()
 	app.Name = "pspk"
+	app.Usage = "encrypt you message and send through open communication channel"
 	app.Metadata = map[string]interface{}{"builded": BuildDate}
 	app.Version = Version + "." + Hash
 	app.Description = "Console tool for encyption/decription data through pspk.now.sh"

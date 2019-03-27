@@ -1,4 +1,4 @@
-VERSION=0.1.1
+VERSION=0.1.2
 NAME=pspk
 GIT_REV?=$(shell git rev-parse --short HEAD)
 LDFLAGS=-ldflags "-X main.Version=$(VERSION) -X main.Hash=$(GIT_REV) -X main.BuildDate=$(BUILD_DATE)"
@@ -6,7 +6,7 @@ GO=GO111MOUDLE=on go
 
 
 build:
-	VERSION=$(VERSION)-dev	$(GO) build $(LDFLAGS) -o bin/${NAME} ./cmd/cli/
+	VERSION=$(VERSION)-dev $(GO) build $(LDFLAGS) -o bin/${NAME} ./cmd/cli/
 
 release: clean
 	mkdir -p _build
