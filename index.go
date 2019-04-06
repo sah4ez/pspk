@@ -20,6 +20,10 @@ import (
 
 type pub []byte
 
+const (
+	nameKey = "name_key"
+)
+
 type Request struct {
 	Name string `json:"name" bson:"name"`
 	Key  string `json:"key,omitempty" bson:"key"`
@@ -78,32 +82,11 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	resp["access"] = value == token
 
 	if r.Method == http.MethodGet {
-		tmpl, err := template.New("index").Funcs(template.FuncMap{
-			"base64": func(b []byte) string {
-				return base64.StdEncoding.EncodeToString(b)
-			},
-		}).Parse(body)
-		if err != nil {
-			resp["error"] = err.Error()
-			return
-		}
-
-		keys, err := Load()
-		if err != nil {
+		if err := Get(w, r); err != nil {
 			resp["error"] = err.Error()
 			json.NewEncoder(w).Encode(resp)
 			return
 		}
-
-		err = tmpl.Execute(w, PspkStore{
-			Title: "PSPK kv store",
-			Keys:  keys,
-		})
-		if err != nil {
-			resp["error"] = err.Error()
-		}
-		json.NewEncoder(w).Encode(resp)
-		return
 	}
 
 	defer func() {
@@ -203,6 +186,19 @@ func ByName(name string) (p Request, err error) {
 	return
 }
 
+func decode(result []Request) map[string]pub {
+	keys := map[string]pub{}
+	for _, k := range result {
+		b, err := base64.StdEncoding.DecodeString(k.Key)
+		if err != nil {
+			keys[k.Name] = pub{}
+			continue
+		}
+		keys[k.Name] = b
+	}
+	return keys
+}
+
 func Load() (keys map[string]pub, err error) {
 	keys = map[string]pub{}
 	sess := session.Copy()
@@ -217,15 +213,24 @@ func Load() (keys map[string]pub, err error) {
 		return
 	}
 
-	for _, k := range result {
-		b, err := base64.StdEncoding.DecodeString(k.Key)
-		if err != nil {
-			keys[k.Name] = pub{}
-			continue
-		}
-		keys[k.Name] = b
+	keys = decode(result)
+	return
+}
+
+func FindByName(name string) (keys map[string]pub, err error) {
+	sess := session.Copy()
+	defer sess.Close()
+
+	c := sess.DB("pspk").C("keys")
+
+	result := []Request{}
+
+	err = c.Find(bson.M{"name": "/.*" + name + ".*/"}).All(&result)
+	if err != nil {
+		return
 	}
 
+	keys = decode(result)
 	return
 }
 
@@ -268,5 +273,41 @@ func initConnection(w io.Writer, resp map[string]interface{}) {
 		json.NewEncoder(w).Encode(resp)
 		return
 	}
+}
 
+func Get(w io.Writer, r *http.Request) (err error) {
+	tmpl, err := template.New("index").Funcs(template.FuncMap{
+		"base64": func(b []byte) string {
+			return base64.StdEncoding.EncodeToString(b)
+		},
+	}).Parse(body)
+	if err != nil {
+		return fmt.Errorf("parse body: %s", err.Error())
+	}
+
+	var keys map[string]pub
+
+	query := r.URL.Query()
+	name := query.Get(nameKey)
+	if name != "" {
+		keys, err = FindByName(name)
+		if err != nil {
+			return fmt.Errorf("load key by name: %s", err.Error())
+		}
+
+	} else {
+		keys, err = Load()
+		if err != nil {
+			return fmt.Errorf("load all key: %s", err.Error())
+		}
+	}
+
+	err = tmpl.Execute(w, PspkStore{
+		Title: "PSPK kv store",
+		Keys:  keys,
+	})
+	if err != nil {
+		return fmt.Errorf("execute template: %s", err.Error())
+	}
+	return
 }
