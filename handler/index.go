@@ -1,4 +1,4 @@
-package main
+package handler
 
 import (
 	"crypto/tls"
@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -22,11 +23,14 @@ type pub []byte
 
 const (
 	nameKey = "name_key"
+	linkKey = "link"
 )
 
 type Request struct {
-	Name string `json:"name" bson:"name"`
-	Key  string `json:"key,omitempty" bson:"key"`
+	Name   string `json:"name,omitempty" bson:"name"`
+	Key    string `json:"key,omitempty" bson:"key"`
+	Method string `json:"method,omitempty" bson:"-"`
+	Data   string `json:"data,omitempty" bson:"-"`
 }
 
 var (
@@ -82,6 +86,14 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	resp["access"] = value == token
 
 	if r.Method == http.MethodGet {
+		idLink := r.URL.Query().Get(linkKey)
+		if idLink != "" {
+			if err := GetByLink(w, r); err != nil {
+				resp["error"] = err.Error()
+				json.NewEncoder(w).Encode(resp)
+			}
+			return
+		}
 		if err := Get(w, r); err != nil {
 			resp["error"] = err.Error()
 			json.NewEncoder(w).Encode(resp)
@@ -104,46 +116,67 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if keyRequest.Key == "" && keyRequest.Name == "" {
-			err = fmt.Errorf("not set values")
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		if err = pspk.CheckLimitNameLen(keyRequest.Name); err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		if keyRequest.Key == "" {
-			key, err := ByName(keyRequest.Name)
+		switch strings.ToLower(keyRequest.Method) {
+		case linkKey:
+			if keyRequest.Data == "" {
+				err = fmt.Errorf("empty data")
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			if len(keyRequest.Data) > 2048 {
+				err = fmt.Errorf("Very large data, max 2048 symbols")
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			id, err := GenerateLinkId(keyRequest.Data)
 			if err != nil {
-				if err == errKeyNotFound {
-					w.WriteHeader(http.StatusNotFound)
+				return
+			}
+			resp["link"] = id
+			return
+		default:
+			if keyRequest.Key == "" && keyRequest.Name == "" {
+				err = fmt.Errorf("not set values")
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+
+			if err = pspk.CheckLimitNameLen(keyRequest.Name); err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+
+			if keyRequest.Key == "" {
+				key, err := ByName(keyRequest.Name)
+				if err != nil {
+					if err == errKeyNotFound {
+						w.WriteHeader(http.StatusNotFound)
+						return
+					}
+					w.WriteHeader(http.StatusInternalServerError)
 					return
 				}
+				resp["key"] = key.Key
+				return
+			}
+
+			err = PutKey(keyRequest)
+			if mgo.IsDup(err) {
+				err = fmt.Errorf("name %s is exist", keyRequest.Name)
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+
+			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
-			resp["key"] = key.Key
-			return
+
+			resp["msg"] = "added"
+
+			w.WriteHeader(http.StatusCreated)
 		}
 
-		err = PutKey(keyRequest)
-		if mgo.IsDup(err) {
-			err = fmt.Errorf("name %s is exist", keyRequest.Name)
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		resp["msg"] = "added"
-
-		w.WriteHeader(http.StatusCreated)
 		return
 	}
 }
@@ -217,6 +250,40 @@ func Load() (keys map[string]pub, err error) {
 	return
 }
 
+func FindByLinkId(id string) (data string, err error) {
+	sess := session.Copy()
+	defer sess.Close()
+
+	c := sess.DB("pspk").C("links")
+
+	var body struct {
+		Data string `bson:"data"`
+	}
+
+	err = c.FindId(bson.ObjectIdHex(id)).One(&body)
+	return body.Data, err
+}
+
+func GenerateLinkId(data string) (id string, err error) {
+	sess := session.Copy()
+	defer sess.Close()
+
+	c := sess.DB("pspk").C("links")
+
+	var link = struct {
+		ID        bson.ObjectId `bson:"_id"`
+		Data      string        `bson:"data"`
+		CreatedAt time.Time     `bson:"created_at"`
+	}{
+		ID:        bson.NewObjectId(),
+		Data:      data,
+		CreatedAt: time.Now(),
+	}
+
+	err = c.Insert(&link)
+	return link.ID.Hex(), err
+}
+
 func FindByName(name string) (keys map[string]pub, err error) {
 	sess := session.Copy()
 	defer sess.Close()
@@ -273,6 +340,26 @@ func initConnection(w io.Writer, resp map[string]interface{}) {
 		json.NewEncoder(w).Encode(resp)
 		return
 	}
+	c = session.DB("pspk").C("links")
+	err = c.EnsureIndex(mgo.Index{Key: []string{"create_at"}, ExpireAfter: 60 * 60 * 24 * time.Second})
+	if err != nil {
+		resp["error"] = err.Error()
+		resp["cause"] = "create index"
+		json.NewEncoder(w).Encode(resp)
+		return
+	}
+}
+
+func GetByLink(w io.Writer, r *http.Request) (err error) {
+	query := r.URL.Query()
+	id := query.Get(linkKey)
+	data, err := FindByLinkId(id)
+	if err != nil {
+		return err
+	}
+	enc := json.NewEncoder(w)
+	err = enc.Encode(map[string]string{"data": data})
+	return
 }
 
 func Get(w io.Writer, r *http.Request) (err error) {
