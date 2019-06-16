@@ -107,11 +107,19 @@ Will encryption message through your private key and public key name from pspk.n
 ```bash
 pspk --name <NAME_YOUR_KEY> encrypt <PUBLIC_PART> <SOME_MESSAGE_WITH_SPACES>
 ```
+Or encryption with ephemral key
+```bash
+pspk ephemeral-encrypt <PUBLIC_PART> <SOME_MESSAGE_WITH_SPACES>
+```
 
 ### Decription some text message. 
 Will decription message through your private key and public key name from pspk.now.sh.
 ```bash
 pspk --name <NAME_YOUR_KEY> decrypt <PUBLIC_PART> <SOME_BASE64_WITH_SPACES>
+```
+Or decription with ephemral key
+```bash
+pspk --name <NAME_YOUR_KEY> ephemeral-decrypt <SOME_MESSAGE_WITH_SPACES>
 ```
 
 ### Group encryption exchange
