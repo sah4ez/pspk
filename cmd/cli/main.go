@@ -19,7 +19,7 @@ var (
 	Version string
 	// Hash revision number from git
 	Hash string
-	// BuildDate when building this utilitites
+	// BuildDate when building this utilities
 	BuildDate string
 )
 
