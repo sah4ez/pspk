@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -12,8 +13,14 @@ import (
 
 func Encrypt() cli.Command {
 	return cli.Command{
-		Name:        "encrypt",
-		Aliases:     []string{"e"},
+		Name:    "encrypt",
+		Aliases: []string{"e"},
+		Flags: []cli.Flag{
+			cli.BoolFlag{
+				Name:  "link",
+				Usage: "for generation 24hr link for loading data",
+			},
+		},
 		Usage:       "ecnrypt pub_name some message will encrypt",
 		Description: `Encrypt input message with shared key`,
 		Action: func(c *cli.Context) error {
@@ -22,7 +29,7 @@ func Encrypt() cli.Command {
 			name := c.GlobalString("name")
 			if name == "" {
 				if cfg.CurrentName == "" {
-					return fmt.Errorf("empty current name, set to config or use --name")
+					return errors.New("empty current name, set to config or use --name")
 				}
 				name = cfg.CurrentName
 			}
@@ -47,16 +54,23 @@ func Encrypt() cli.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Println(base64.StdEncoding.EncodeToString(b))
-			return nil
+			data := base64.StdEncoding.EncodeToString(b)
+			fmt.Fprintln(out, data)
+			return link(c.Bool("link"), data)
 		},
 	}
 }
 
 func EphemeralEncrypt() cli.Command {
 	return cli.Command{
-		Name:        "ephemeral-encrypt",
-		Aliases:     []string{"ee"},
+		Name:    "ephemeral-encrypt",
+		Aliases: []string{"ee"},
+		Flags: []cli.Flag{
+			cli.BoolFlag{
+				Name:  "link",
+				Usage: "for generation 24hr link for loading data",
+			},
+		},
 		Usage:       "ee pub_name some message will encrypt",
 		Description: `Encrypt input message with ephemeral key`,
 		Action: func(c *cli.Context) error {
@@ -83,16 +97,23 @@ func EphemeralEncrypt() cli.Command {
 				return err
 			}
 			m := append(pubEphemeral[:], b...)
-			fmt.Println(base64.StdEncoding.EncodeToString(m))
-			return nil
+			data := base64.StdEncoding.EncodeToString(m)
+			fmt.Fprintln(out, data)
+			return link(c.Bool("link"), data)
 		},
 	}
 }
 
 func EncryptGroup() cli.Command {
 	return cli.Command{
-		Name:        "encrypt-group",
-		Aliases:     []string{"eg"},
+		Name:    "encrypt-group",
+		Aliases: []string{"eg"},
+		Flags: []cli.Flag{
+			cli.BoolFlag{
+				Name:  "link",
+				Usage: "for generation 24hr link for loading data",
+			},
+		},
 		Usage:       "eg <GROUP_NAME> message",
 		Description: "Encrypt message for group",
 		Action: func(c *cli.Context) error {
@@ -101,7 +122,7 @@ func EncryptGroup() cli.Command {
 			name := c.GlobalString("name")
 			if name == "" {
 				if cfg.CurrentName == "" {
-					return fmt.Errorf("empty current name, set to config or use --name")
+					return errors.New("empty current name, set to config or use --name")
 				}
 				name = cfg.CurrentName
 			}
@@ -126,7 +147,7 @@ func EncryptGroup() cli.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Println(base64.StdEncoding.EncodeToString(b))
+			fmt.Fprintln(out, base64.StdEncoding.EncodeToString(b))
 			return nil
 		},
 	}
@@ -136,7 +157,13 @@ func EphemeralEncrypGroup() cli.Command {
 	return cli.Command{
 		Name:    "ephemeral-encrypt-group",
 		Aliases: []string{"eeg"},
-		Usage:   `Encrypt input message with ephemeral key`,
+		Flags: []cli.Flag{
+			cli.BoolFlag{
+				Name:  "link",
+				Usage: "for generation 24hr link for loading data",
+			},
+		},
+		Usage: `Encrypt input message with ephemeral key`,
 		Action: func(c *cli.Context) error {
 			groupName := c.Args()[0]
 			message := c.Args()[1:]
@@ -144,7 +171,7 @@ func EphemeralEncrypGroup() cli.Command {
 			name := c.GlobalString("name")
 			if name == "" {
 				if cfg.CurrentName == "" {
-					return fmt.Errorf("empty current name, set to config or use --name")
+					return errors.New("empty current name, set to config or use --name")
 				}
 				name = cfg.CurrentName
 			}
@@ -171,8 +198,20 @@ func EphemeralEncrypGroup() cli.Command {
 				return err
 			}
 			m := append(pubEphemeral[:], b...)
-			fmt.Println(base64.StdEncoding.EncodeToString(m))
-			return nil
+			data := base64.StdEncoding.EncodeToString(m)
+			fmt.Fprintln(out, data)
+			return link(c.Bool("link"), data)
 		},
 	}
+}
+
+func link(isLink bool, data string) error {
+	if isLink {
+		id, err := api.GenerateLink(data)
+		if err != nil {
+			return err
+		}
+		fmt.Fprintln(out, baseURL+"/?link="+id)
+	}
+	return nil
 }

@@ -16,14 +16,14 @@ import (
 
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
-	"github.com/sah4ez/pspk/pkg/pspk"
+	"github.com/sah4ez/pspk/pkg/validation"
 )
 
 type pub []byte
 
 const (
-	nameKey = "name_key"
-	linkKey = "link"
+	NameKey = "name_key"
+	LinkKey = "link"
 )
 
 type Request struct {
@@ -86,7 +86,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	resp["access"] = value == token
 
 	if r.Method == http.MethodGet {
-		idLink := r.URL.Query().Get(linkKey)
+		idLink := r.URL.Query().Get(LinkKey)
 		if idLink != "" {
 			if err := GetByLink(w, r); err != nil {
 				resp["error"] = err.Error()
@@ -117,7 +117,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		switch strings.ToLower(keyRequest.Method) {
-		case linkKey:
+		case LinkKey:
 			if keyRequest.Data == "" {
 				err = fmt.Errorf("empty data")
 				w.WriteHeader(http.StatusBadRequest)
@@ -141,7 +141,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			if err = pspk.CheckLimitNameLen(keyRequest.Name); err != nil {
+			if err = validation.CheckLimitNameLen(keyRequest.Name); err != nil {
 				w.WriteHeader(http.StatusBadRequest)
 				return
 			}
@@ -352,7 +352,7 @@ func initConnection(w io.Writer, resp map[string]interface{}) {
 
 func GetByLink(w io.Writer, r *http.Request) (err error) {
 	query := r.URL.Query()
-	id := query.Get(linkKey)
+	id := query.Get(LinkKey)
 	data, err := FindByLinkId(id)
 	if err != nil {
 		return err
@@ -375,7 +375,7 @@ func Get(w io.Writer, r *http.Request) (err error) {
 	var keys map[string]pub
 
 	query := r.URL.Query()
-	name := query.Get(nameKey)
+	name := query.Get(NameKey)
 	if name != "" {
 		keys, err = FindByName(name)
 		if err != nil {
