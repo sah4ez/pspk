@@ -16,7 +16,7 @@ This service solve problem for persistent saving public key and send to recipien
 
 - [x] save public key with name
 - [x] load public key by name
-- [ ] share some encrypted data via one-time link
+- [x] share some encrypted data via one-time link
 - [ ] support other elliptic curve cryptography algorithms
 - [ ] ephemeral encryption via API method
 - [ ] verification of signature by link
