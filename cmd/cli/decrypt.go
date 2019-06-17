@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 
+	"github.com/pkg/errors"
 	"github.com/sah4ez/pspk/pkg/keys"
 	"github.com/sah4ez/pspk/pkg/utils"
 	"github.com/urfave/cli"
@@ -14,10 +15,25 @@ func Decrypt() cli.Command {
 		Name:        "decrypt",
 		Aliases:     []string{"d"},
 		Description: "Decrypt input message with shared key",
-		Usage:       "decrypt pub_name base64==",
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "link",
+				Usage: "<URL> - for loading decode data by link instead of text input data",
+			},
+		},
+		Usage: "decrypt pub_name base64==",
 		Action: func(c *cli.Context) error {
 			pubName := c.Args().Get(0)
-			message := c.Args().Get(1)
+			var message string
+			if link := c.String("link"); len(link) > 0 {
+				m, err := api.DownloadByLink(link)
+				if err != nil {
+					return errors.Wrap(err, "download by link failed")
+				}
+				message = m
+			} else {
+				message = c.Args().Get(1)
+			}
 			name := c.GlobalString("name")
 			if name == "" {
 				if cfg.CurrentName == "" {
@@ -29,7 +45,7 @@ func Decrypt() cli.Command {
 
 			priv, err := utils.Read(path, "key.bin")
 			if err != nil {
-				return err
+				return errors.Wrap(err, "read key.bin")
 			}
 			pub, err := api.Load(pubName)
 			if err != nil {
@@ -60,9 +76,24 @@ func EphemeralDecrypt() cli.Command {
 		Name:        "ephemeral-decrypt",
 		Aliases:     []string{"ed"},
 		Description: `Decrypt input message with ephemral shared key`,
-		Usage:       "ephemeral-decryp pub_name base64==",
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "link",
+				Usage: "<URL> - for loading decode data by link instead of text input data",
+			},
+		},
+		Usage: "ephemeral-decryp pub_name base64==",
 		Action: func(c *cli.Context) error {
-			message := c.Args().Get(0)
+			var message string
+			if link := c.String("link"); len(link) > 0 {
+				m, err := api.DownloadByLink(link)
+				if err != nil {
+					return errors.Wrap(err, "download by link failed")
+				}
+				message = m
+			} else {
+				message = c.Args().Get(1)
+			}
 			name := c.GlobalString("name")
 			if name == "" {
 				if cfg.CurrentName == "" {
@@ -74,7 +105,7 @@ func EphemeralDecrypt() cli.Command {
 
 			priv, err := utils.Read(path, "key.bin")
 			if err != nil {
-				return err
+				return errors.Wrap(err, "read key.bin")
 			}
 			bytesMessage, err := base64.StdEncoding.DecodeString(message)
 			if err != nil {
@@ -100,10 +131,25 @@ func DecryptGroup() cli.Command {
 	return cli.Command{
 		Name:    "decrypt-group",
 		Aliases: []string{"dg"},
-		Usage:   "dg <GROUP_NAME> base64",
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "link",
+				Usage: "<URL> - for loading decode data by link instead of text input data",
+			},
+		},
+		Usage: "dg <GROUP_NAME> base64",
 		Action: func(c *cli.Context) error {
-			groupName := c.Args()[0]
-			message := c.Args().Get(1)
+			groupName := c.Args().Get(0)
+			var message string
+			if link := c.String("link"); len(link) > 0 {
+				m, err := api.DownloadByLink(link)
+				if err != nil {
+					return errors.Wrap(err, "download by link failed")
+				}
+				message = m
+			} else {
+				message = c.Args().Get(1)
+			}
 			name := c.GlobalString("name")
 			if name == "" {
 				if cfg.CurrentName == "" {
@@ -115,7 +161,7 @@ func DecryptGroup() cli.Command {
 
 			priv, err := utils.Read(path, groupName+".secret")
 			if err != nil {
-				return err
+				return errors.Wrap(err, "read group secret")
 			}
 			pub, err := api.Load(groupName)
 			if err != nil {
@@ -145,10 +191,25 @@ func EphemeralDecryptGroup() cli.Command {
 	return cli.Command{
 		Name:    "ephemeral-decrypt-group",
 		Aliases: []string{"edg"},
-		Usage:   `Decrypt input message with ephemral shared key`,
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "link",
+				Usage: "<URL> - for loading decode data by link instead of text input data",
+			},
+		},
+		Usage: `Decrypt input message with ephemral shared key`,
 		Action: func(c *cli.Context) error {
 			groupName := c.Args().Get(0)
-			message := c.Args().Get(1)
+			var message string
+			if link := c.String("link"); len(link) > 0 {
+				m, err := api.DownloadByLink(link)
+				if err != nil {
+					return errors.Wrap(err, "download by link failed")
+				}
+				message = m
+			} else {
+				message = c.Args().Get(1)
+			}
 			name := c.GlobalString("name")
 			if name == "" {
 				if cfg.CurrentName == "" {
@@ -160,7 +221,7 @@ func EphemeralDecryptGroup() cli.Command {
 
 			priv, err := utils.Read(path, groupName+".secret")
 			if err != nil {
-				return err
+				return errors.Wrap(err, "read group secret")
 			}
 			bytesMessage, err := base64.StdEncoding.DecodeString(message)
 			if err != nil {

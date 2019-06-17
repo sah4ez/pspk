@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/sah4ez/pspk/pkg/config"
@@ -29,6 +30,7 @@ var (
 	cfg  *config.Config
 	path string
 	err  error
+	out  io.Writer = os.Stdout
 )
 
 func init() {
@@ -52,7 +54,8 @@ func main() {
 		cli.StringFlag{
 			Name:  "name",
 			Usage: "key name",
-		}}
+		},
+	}
 
 	app.Commands = []cli.Command{
 		Publish(),
