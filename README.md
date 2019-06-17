@@ -105,21 +105,48 @@ pspk --name <NAME_YOUR_KEY> publish
 ### Encryption some text message. 
 Will encryption message through your private key and public key name from pspk.now.sh.
 ```bash
-pspk --name <NAME_YOUR_KEY> encrypt <PUBLIC_PART> <SOME_MESSAGE_WITH_SPACES>
+pspk --name <NAME_YOUR_KEY> encrypt <PUBLIC_PART_NAME> <SOME_MESSAGE_WITH_SPACES>
 ```
 Or encryption with ephemral key
 ```bash
-pspk ephemeral-encrypt <PUBLIC_PART> <SOME_MESSAGE_WITH_SPACES>
+pspk ephemeral-encrypt <PUBLIC_PART_NAME> <SOME_MESSAGE_WITH_SPACES>
 ```
+
+Also encrypt commands have a `--link` boolean flag for uploading encrypted data to server. 
+And generation link 24hrs for access data.
+```bash
+pspk ephemeral-encrypt --link <PUBLIC_PART_NAME> <SOME_MESSAGE_WITH_SAPCES>
+```
+
+Output:
+```bash
+base64ofencpryteddata==
+https://pspk.now.sh/?link=5d07c5264f818b00069f5dda
+```
+
+Get data by this link return json:
+```json
+{"data":"MmeSOsti98jaancR+qsbNtpL6nwPtov2p9U5diP7ahbSAhkwsYbgYMRAHMbO/gry"}
+```
+
+where data contains encrypted data.
+
 
 ### Decription some text message. 
 Will decription message through your private key and public key name from pspk.now.sh.
 ```bash
-pspk --name <NAME_YOUR_KEY> decrypt <PUBLIC_PART> <SOME_BASE64_WITH_SPACES>
+pspk --name <NAME_YOUR_KEY> decrypt <PUBLIC_PART_NAME> <SOME_BASE64_WITH_SPACES>
 ```
 Or decription with ephemral key
 ```bash
 pspk --name <NAME_YOUR_KEY> ephemeral-decrypt <SOME_MESSAGE_WITH_SPACES>
+```
+
+Also decrypt commands have a `--link <URL>` string flag for downloading ecnrypted data from server.
+
+Example:
+```bash
+pspk --name <NAME_YOUR_KEY> ephemeral-decrypt --link https://pspk.now.sh/?link=5d07c5264f818b00069f5dda
 ```
 
 ### Group encryption exchange
