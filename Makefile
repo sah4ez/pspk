@@ -14,6 +14,10 @@ release: clean
 	GOOS=linux   GOARCH=amd64 $(GO) build $(LDFLAGS) -o _build/$(NAME)-$(VERSION)-linux-amd64 ./cmd/cli
 	GOOS=linux   GOARCH=arm   $(GO) build $(LDFLAGS) -o _build/$(NAME)-$(VERSION)-linux-arm ./cmd/cli
 	GOOS=linux   GOARCH=arm64 $(GO) build $(LDFLAGS) -o _build/$(NAME)-$(VERSION)-linux-arm64 ./cmd/cli
+	GOOS=darwin  GOARCH=amd64 $(GO) build $(LDFLAGS) -o _build/$(NAME)-srv-$(VERSION)-darwin-amd64 ./cmd/server
+	GOOS=linux   GOARCH=amd64 $(GO) build $(LDFLAGS) -o _build/$(NAME)-srv-$(VERSION)-linux-amd64 ./cmd/server
+	GOOS=linux   GOARCH=arm   $(GO) build $(LDFLAGS) -o _build/$(NAME)-srv-$(VERSION)-linux-arm ./cmd/server
+	GOOS=linux   GOARCH=arm64 $(GO) build $(LDFLAGS) -o _build/$(NAME)-srv-$(VERSION)-linux-arm64 ./cmd/server
 	cd _build; sha256sum * > sha256sums.txt
 
 clean:

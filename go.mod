@@ -8,6 +8,7 @@ require (
 	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/miekg/dns v1.1.6 // indirect
+	github.com/pkg/errors v0.8.1
 	github.com/rs/dnscache v0.0.0-20190225195841-509b4d5d3b47 // indirect
 	github.com/urfave/cli v1.20.0
 	golang.org/x/crypto v0.0.0-20190313024323-a1f597ede03a

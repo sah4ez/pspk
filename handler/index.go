@@ -78,7 +78,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "OPTIONS" {
 		return
 	}
-
+	//initConnection(w, resp)
 	once.Do(func() { initConnection(w, resp) })
 
 	value := r.Header.Get("X-Access-Token")
@@ -302,15 +302,21 @@ func FindByName(name string) (keys map[string]pub, err error) {
 }
 
 func initConnection(w io.Writer, resp map[string]interface{}) {
-	dialInfo, err := mgo.ParseURL(addr)
-	if err != nil {
-		resp["error"] = err.Error()
-		resp["cause"] = "parse"
-		json.NewEncoder(w).Encode(resp)
-		return
-	}
+	//dialInfo, err := mgo.ParseURL(addr)
+	//if err != nil {
+	//	resp["error"] = err.Error()
+	//	resp["cause"] = "parse"
+	//	resp["url"] = addr
+	//	json.NewEncoder(w).Encode(resp)
+	//	return
+	//}
 
+	dialInfo := &mgo.DialInfo{}
+	dialInfo.Addrs = []string{hosts}
+	dialInfo.Username = user
+	dialInfo.Password = pass
 	dialInfo.Timeout = 5 * time.Second
+	dialInfo.Source = "admin"
 
 	dialInfo.DialServer = func(addr *mgo.ServerAddr) (net.Conn, error) {
 		tlsConfig := &tls.Config{}
@@ -324,7 +330,7 @@ func initConnection(w io.Writer, resp map[string]interface{}) {
 		return conn, err
 	}
 
-	session, err = mgo.DialWithInfo(dialInfo)
+	session1, err := mgo.DialWithInfo(dialInfo)
 	if err != nil {
 		resp["error"] = err.Error()
 		resp["cause"] = "dial"
@@ -332,7 +338,7 @@ func initConnection(w io.Writer, resp map[string]interface{}) {
 		return
 	}
 
-	c := session.DB("pspk").C("keys")
+	c := session1.DB("pspk").C("keys")
 	err = c.EnsureIndex(mgo.Index{Key: []string{"name"}, Unique: true})
 	if err != nil {
 		resp["error"] = err.Error()
@@ -340,7 +346,7 @@ func initConnection(w io.Writer, resp map[string]interface{}) {
 		json.NewEncoder(w).Encode(resp)
 		return
 	}
-	c = session.DB("pspk").C("links")
+	c = session1.DB("pspk").C("links")
 	err = c.EnsureIndex(mgo.Index{Key: []string{"create_at"}, ExpireAfter: 60 * 60 * 24 * time.Second})
 	if err != nil {
 		resp["error"] = err.Error()
@@ -348,6 +354,8 @@ func initConnection(w io.Writer, resp map[string]interface{}) {
 		json.NewEncoder(w).Encode(resp)
 		return
 	}
+	session = session1.Copy()
+	session1.Close()
 }
 
 func GetByLink(w io.Writer, r *http.Request) (err error) {
