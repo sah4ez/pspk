@@ -2,11 +2,15 @@ package handler
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"html/template"
 	"io"
+	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -38,6 +42,7 @@ var (
 	user    = os.Getenv("DB_USER")
 	pass    = os.Getenv("DB_PASS")
 	hosts   = os.Getenv("DB_HOSTS")
+	local   = flag.Bool("local", false, "run with connect to local mongo")
 	addr    = fmt.Sprintf("mongodb://%s:%s@%s/admin", user, pass, hosts)
 	session *mgo.Session
 	once    = &sync.Once{}
@@ -78,8 +83,8 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "OPTIONS" {
 		return
 	}
-	//initConnection(w, resp)
-	once.Do(func() { initConnection(w, resp) })
+	initConnection(w, resp)
+	//once.Do(func() { initConnection(w, resp) })
 
 	value := r.Header.Get("X-Access-Token")
 
@@ -301,63 +306,6 @@ func FindByName(name string) (keys map[string]pub, err error) {
 	return
 }
 
-func initConnection(w io.Writer, resp map[string]interface{}) {
-	//dialInfo, err := mgo.ParseURL(addr)
-	//if err != nil {
-	//	resp["error"] = err.Error()
-	//	resp["cause"] = "parse"
-	//	resp["url"] = addr
-	//	json.NewEncoder(w).Encode(resp)
-	//	return
-	//}
-
-	dialInfo := &mgo.DialInfo{}
-	dialInfo.Addrs = []string{hosts}
-	dialInfo.Username = user
-	dialInfo.Password = pass
-	dialInfo.Timeout = 5 * time.Second
-	dialInfo.Source = "admin"
-
-	dialInfo.DialServer = func(addr *mgo.ServerAddr) (net.Conn, error) {
-		tlsConfig := &tls.Config{}
-		conn, err := tls.Dial("tcp", addr.String(), tlsConfig)
-
-		if err != nil {
-			resp["error"] = err.Error()
-			resp["cause"] = "dial func"
-			json.NewEncoder(w).Encode(resp)
-		}
-		return conn, err
-	}
-
-	session1, err := mgo.DialWithInfo(dialInfo)
-	if err != nil {
-		resp["error"] = err.Error()
-		resp["cause"] = "dial"
-		json.NewEncoder(w).Encode(resp)
-		return
-	}
-
-	c := session1.DB("pspk").C("keys")
-	err = c.EnsureIndex(mgo.Index{Key: []string{"name"}, Unique: true})
-	if err != nil {
-		resp["error"] = err.Error()
-		resp["cause"] = "create index"
-		json.NewEncoder(w).Encode(resp)
-		return
-	}
-	c = session1.DB("pspk").C("links")
-	err = c.EnsureIndex(mgo.Index{Key: []string{"create_at"}, ExpireAfter: 60 * 60 * 24 * time.Second})
-	if err != nil {
-		resp["error"] = err.Error()
-		resp["cause"] = "create index"
-		json.NewEncoder(w).Encode(resp)
-		return
-	}
-	session = session1.Copy()
-	session1.Close()
-}
-
 func GetByLink(w io.Writer, r *http.Request) (err error) {
 	query := r.URL.Query()
 	id := query.Get(LinkKey)
@@ -405,4 +353,80 @@ func Get(w io.Writer, r *http.Request) (err error) {
 		return fmt.Errorf("execute template: %s", err.Error())
 	}
 	return
+}
+
+func initConnection(w io.Writer, resp map[string]interface{}) {
+	//dialInfo, err := mgo.ParseURL(addr)
+	//if err != nil {
+	//	resp["error"] = err.Error()
+	//	resp["cause"] = "parse"
+	//	resp["url"] = addr
+	//	json.NewEncoder(w).Encode(resp)
+	//	return
+	//}
+
+	dialInfo := &mgo.DialInfo{}
+	dialInfo.Addrs = []string{hosts}
+	dialInfo.Username = user
+	dialInfo.Password = pass
+	dialInfo.Timeout = 5 * time.Second
+	dialInfo.Source = "admin"
+
+	dialInfo.DialServer = func(addr *mgo.ServerAddr) (net.Conn, error) {
+		tlsConfig := &tls.Config{}
+
+		if local != nil && *local {
+			cer, err := tls.LoadX509KeyPair("test_certs/localhost.crt", "test_certs/localhost.key")
+			if err != nil {
+				return nil, err
+			}
+			// Load CA cert
+			caCert, err := ioutil.ReadFile("test_certs/rootCA.crt")
+			if err != nil {
+				return nil, err
+			}
+			caCertPool := x509.NewCertPool()
+			caCertPool.AppendCertsFromPEM(caCert)
+
+			tlsConfig.Certificates = []tls.Certificate{cer}
+			tlsConfig.RootCAs = caCertPool
+			tlsConfig.BuildNameToCertificate()
+		}
+
+		conn, err := tls.Dial("tcp", addr.String(), tlsConfig)
+
+		if err != nil {
+			log.Println(err)
+			resp["error"] = err.Error()
+			resp["cause"] = "dial func"
+			json.NewEncoder(w).Encode(resp)
+		}
+		return conn, err
+	}
+
+	var err error
+	session, err = mgo.DialWithInfo(dialInfo)
+	if err != nil {
+		resp["error"] = err.Error()
+		resp["cause"] = "dial"
+		json.NewEncoder(w).Encode(resp)
+		return
+	}
+
+	c := session.DB("pspk").C("keys")
+	err = c.EnsureIndex(mgo.Index{Key: []string{"name"}, Unique: true})
+	if err != nil {
+		resp["error"] = err.Error()
+		resp["cause"] = "create index"
+		json.NewEncoder(w).Encode(resp)
+		return
+	}
+	c = session.DB("pspk").C("links")
+	err = c.EnsureIndex(mgo.Index{Key: []string{"create_at"}, ExpireAfter: 60 * 60 * 24 * time.Second})
+	if err != nil {
+		resp["error"] = err.Error()
+		resp["cause"] = "create index"
+		json.NewEncoder(w).Encode(resp)
+		return
+	}
 }
