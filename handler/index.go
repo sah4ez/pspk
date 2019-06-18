@@ -10,7 +10,6 @@ import (
 	"html/template"
 	"io"
 	"io/ioutil"
-	"log"
 	"net"
 	"net/http"
 	"os"
@@ -46,6 +45,8 @@ var (
 	addr    = fmt.Sprintf("mongodb://%s:%s@%s/admin", user, pass, hosts)
 	session *mgo.Session
 	once    = &sync.Once{}
+
+	output io.Writer = os.Stdout
 
 	errKeyNotFound = fmt.Errorf("key not found")
 )
@@ -390,7 +391,7 @@ func initConnection(w io.Writer, resp map[string]interface{}) {
 		conn, err := tls.Dial("tcp", addr.String(), tlsConfig)
 
 		if err != nil {
-			log.Println(err)
+			fmt.Fprint(output, err.Error())
 			resp["error"] = err.Error()
 			resp["cause"] = "dial func"
 			json.NewEncoder(w).Encode(resp)
