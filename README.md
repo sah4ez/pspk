@@ -18,7 +18,7 @@ This service solve problem for persistent saving public key and send to recipien
 - [x] load public key by name
 - [x] share some encrypted data via one-time link
 - [ ] support other elliptic curve cryptography algorithms
-- [ ] ~ephemeral encryption via API method~
+- [ ] ephemeral encryption via API method (generate ephemeral private key on server, ecnrypt by public key and return link to data)
 - [ ] verification of signature by link
 - [ ] QR codes
 - [ ] simple cli tool
