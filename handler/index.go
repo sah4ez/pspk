@@ -83,8 +83,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "OPTIONS" {
 		return
 	}
-	initConnection(w, resp)
-	//once.Do(func() { initConnection(w, resp) })
+	once.Do(func() { initConnection(w, resp) })
 
 	value := r.Header.Get("X-Access-Token")
 
@@ -356,21 +355,16 @@ func Get(w io.Writer, r *http.Request) (err error) {
 }
 
 func initConnection(w io.Writer, resp map[string]interface{}) {
-	//dialInfo, err := mgo.ParseURL(addr)
-	//if err != nil {
-	//	resp["error"] = err.Error()
-	//	resp["cause"] = "parse"
-	//	resp["url"] = addr
-	//	json.NewEncoder(w).Encode(resp)
-	//	return
-	//}
-
-	dialInfo := &mgo.DialInfo{}
-	dialInfo.Addrs = []string{hosts}
-	dialInfo.Username = user
-	dialInfo.Password = pass
+	var err error
+	dialInfo, err := mgo.ParseURL(addr)
+	if err != nil {
+		resp["error"] = err.Error()
+		resp["cause"] = "parse"
+		resp["url"] = addr
+		json.NewEncoder(w).Encode(resp)
+		return
+	}
 	dialInfo.Timeout = 5 * time.Second
-	dialInfo.Source = "admin"
 
 	dialInfo.DialServer = func(addr *mgo.ServerAddr) (net.Conn, error) {
 		tlsConfig := &tls.Config{}
@@ -404,7 +398,6 @@ func initConnection(w io.Writer, resp map[string]interface{}) {
 		return conn, err
 	}
 
-	var err error
 	session, err = mgo.DialWithInfo(dialInfo)
 	if err != nil {
 		resp["error"] = err.Error()
