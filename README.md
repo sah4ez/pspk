@@ -18,14 +18,14 @@ This service solve problem for persistent saving public key and send to recipien
 - [x] load public key by name
 - [x] share some encrypted data via one-time link
 - [ ] support other elliptic curve cryptography algorithms
-- [ ] ephemeral encryption via API method
+- [ ] ~ephemeral encryption via API method~
 - [ ] verification of signature by link
 - [ ] QR codes
 - [ ] simple cli tool
 - [ ] simple web-application
 - [ ] simple iOS client
 - [ ] simple android client
-- [ ] local http server to pspk API
+- [x] local http server to pspk API
 
 ## Model
 
