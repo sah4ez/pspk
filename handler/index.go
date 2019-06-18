@@ -1,16 +1,12 @@
 package handler
 
 import (
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"html/template"
 	"io"
-	"io/ioutil"
-	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -353,74 +349,4 @@ func Get(w io.Writer, r *http.Request) (err error) {
 		return fmt.Errorf("execute template: %s", err.Error())
 	}
 	return
-}
-
-func initConnection(w io.Writer, resp map[string]interface{}) {
-	var err error
-	dialInfo, err := mgo.ParseURL(addr)
-	if err != nil {
-		resp["error"] = err.Error()
-		resp["cause"] = "parse"
-		resp["url"] = addr
-		json.NewEncoder(w).Encode(resp)
-		return
-	}
-	dialInfo.Timeout = 5 * time.Second
-
-	dialInfo.DialServer = func(addr *mgo.ServerAddr) (net.Conn, error) {
-		tlsConfig := &tls.Config{}
-
-		if local != nil && *local {
-			cer, err := tls.LoadX509KeyPair("test_certs/localhost.crt", "test_certs/localhost.key")
-			if err != nil {
-				return nil, err
-			}
-			// Load CA cert
-			caCert, err := ioutil.ReadFile("test_certs/rootCA.crt")
-			if err != nil {
-				return nil, err
-			}
-			caCertPool := x509.NewCertPool()
-			caCertPool.AppendCertsFromPEM(caCert)
-
-			tlsConfig.Certificates = []tls.Certificate{cer}
-			tlsConfig.RootCAs = caCertPool
-			tlsConfig.BuildNameToCertificate()
-		}
-
-		conn, err := tls.Dial("tcp", addr.String(), tlsConfig)
-
-		if err != nil {
-			fmt.Fprint(output, err.Error())
-			resp["error"] = err.Error()
-			resp["cause"] = "dial func"
-			json.NewEncoder(w).Encode(resp)
-		}
-		return conn, err
-	}
-
-	session, err = mgo.DialWithInfo(dialInfo)
-	if err != nil {
-		resp["error"] = err.Error()
-		resp["cause"] = "dial"
-		json.NewEncoder(w).Encode(resp)
-		return
-	}
-
-	c := session.DB("pspk").C("keys")
-	err = c.EnsureIndex(mgo.Index{Key: []string{"name"}, Unique: true})
-	if err != nil {
-		resp["error"] = err.Error()
-		resp["cause"] = "create index"
-		json.NewEncoder(w).Encode(resp)
-		return
-	}
-	c = session.DB("pspk").C("links")
-	err = c.EnsureIndex(mgo.Index{Key: []string{"create_at"}, ExpireAfter: 60 * 60 * 24 * time.Second})
-	if err != nil {
-		resp["error"] = err.Error()
-		resp["cause"] = "create index"
-		json.NewEncoder(w).Encode(resp)
-		return
-	}
 }
