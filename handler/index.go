@@ -25,8 +25,9 @@ import (
 type pub []byte
 
 const (
-	NameKey = "name_key"
-	LinkKey = "link"
+	NameKey   = "name_key"
+	LinkKey   = "link"
+	OutputKey = "ouptput"
 )
 
 type Request struct {
@@ -91,9 +92,15 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	resp["access"] = value == token
 
 	if r.Method == http.MethodGet {
-		idLink := r.URL.Query().Get(LinkKey)
-		if idLink != "" {
+		if r.URL.Query().Get(LinkKey) != "" {
 			if err := GetByLink(w, r); err != nil {
+				resp["error"] = err.Error()
+				json.NewEncoder(w).Encode(resp)
+			}
+			return
+		}
+		if r.URL.Query().Get(OutputKey) == "json" {
+			if err := GetKeysInJson(w, r); err != nil {
 				resp["error"] = err.Error()
 				json.NewEncoder(w).Encode(resp)
 			}
@@ -384,6 +391,16 @@ func GetByLink(w io.Writer, r *http.Request) (err error) {
 	}
 	enc := json.NewEncoder(w)
 	err = enc.Encode(map[string]string{"data": data})
+	return
+}
+
+func GetKeysInJson(w io.Writer, r *http.Request) (err error) {
+	data, err := Load()
+	if err != nil {
+		return err
+	}
+	enc := json.NewEncoder(w)
+	err = enc.Encode(data)
 	return
 }
 
