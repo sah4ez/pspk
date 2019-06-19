@@ -27,7 +27,7 @@ type pub []byte
 const (
 	NameKey   = "name_key"
 	LinkKey   = "link"
-	OutputKey = "ouptput"
+	OutputKey = "output"
 )
 
 type Request struct {
@@ -100,6 +100,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if r.URL.Query().Get(OutputKey) == "json" {
+			w.Header().Set("Content-Type", "application/json")
 			if err := GetKeysInJson(w, r); err != nil {
 				resp["error"] = err.Error()
 				json.NewEncoder(w).Encode(resp)
