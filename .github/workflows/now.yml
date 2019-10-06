@@ -1,6 +1,9 @@
 name: CI
 
-on: [push]
+on: 
+  push:
+    branches:
+      - master
 
 jobs:
   build:
@@ -13,6 +16,6 @@ jobs:
    
     - name: deploy
       env:
-        TOKEN: ${{ ZEIT_TOKNE }}
+        TOKEN: ${{ ZEIT_TOKEN }}
       run: |
         now --token ${TOKEN}
