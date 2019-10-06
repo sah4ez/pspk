@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     
     env:
-      TOKEN: ${{ secrets.ZEIT_TOKEN }}
+      ZEIT_TOKEN: ${{ secrets.ZEIT_TOKEN }}
 
     steps:
     - name: GitHub Action for Zeit
