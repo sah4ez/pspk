@@ -16,6 +16,6 @@ jobs:
     - name: GitHub Action for Zeit
       uses: actions/zeit-now@1.0.0
 
-      name: deploy
+    - name: deploy
       run: |
         now --token ${TOKEN} 
