@@ -15,9 +15,5 @@ jobs:
     steps:
     - name: GitHub Action for Zeit
       uses: actions/zeit-now@1.0.0
-
-    - name: deploy
       run: |
-        ls -lah 
-        pwd 
         now --token ${ZEIT_TOKEN} -A /github/workspace/now.json
