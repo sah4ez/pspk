@@ -15,5 +15,4 @@ jobs:
     steps:
     - name: GitHub Action for Zeit
       uses: actions/zeit-now@1.0.0
-      run: |
-        now --token ${TOKEN}
+      args: --token ${TOKEN}
