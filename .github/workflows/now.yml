@@ -7,15 +7,13 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     
+    env:
+      TOKEN: ${{ secrets.ZEIT_TOKEN }}
+
     steps:
     - name: GitHub Action for Zeit
       uses: actions/zeit-now@1.0.0
-   
-    - name: deploy
-      env:
-        TOKEN: ${{ secrets.ZEIT_TOKEN }}
       run: |
         now --token ${TOKEN}
