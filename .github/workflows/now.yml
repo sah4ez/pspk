@@ -18,4 +18,5 @@ jobs:
 
     - name: deploy
       run: |
-        now --token ${ZEIT_TOKEN} -A ./now.json
+        ls -lah 
+        now --token ${ZEIT_TOKEN} -A /github/workspace/now.json
