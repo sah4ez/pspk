@@ -16,6 +16,6 @@ jobs:
    
     - name: deploy
       env:
-        TOKEN: ${{ ZEIT_TOKEN }}
+        TOKEN: ${{ secrets.ZEIT_TOKEN }}
       run: |
         now --token ${TOKEN}
