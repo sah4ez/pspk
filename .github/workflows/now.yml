@@ -18,4 +18,4 @@ jobs:
 
     - name: deploy
       run: |
-        now --token ${TOKEN} 
+        now --token ${ZEIT_TOKEN} 
