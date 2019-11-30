@@ -58,12 +58,12 @@ func Decrypt() cli.Command {
 			}
 			bytesMessage, err := base64.StdEncoding.DecodeString(message)
 			if err != nil {
-				return err
+				return fmt.Errorf("bytesMessage has error: %s", err.Error())
 			}
 
 			b, err := utils.Decrypt(messageKey[64:], messageKey[:32], bytesMessage)
 			if err != nil {
-				return err
+				return fmt.Errorf("decrypt has error: %s", err.Error())
 			}
 			fmt.Println(string(b))
 			return nil
@@ -92,7 +92,7 @@ func EphemeralDecrypt() cli.Command {
 				}
 				message = m
 			} else {
-				message = c.Args().Get(1)
+				message = c.Args().Get(0)
 			}
 			name := c.GlobalString("name")
 			if name == "" {
