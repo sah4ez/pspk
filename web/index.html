@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<a>hello world2!</a>
+<script src="./axlsign.js"></script>
+
+<script type="text/javascript">
+    var text = "hello bob";
+    var enc = new TextEncoder();
+    var info = enc.encode("pspk_info");
+
+    var seed = new Uint8Array(32);
+    window.crypto.getRandomValues(seed);
+    var keyPair = axlsign.generateKeyPair(seed);
+
+    function _base64ToUint8Array(base64) {
+        var binary_string = window.atob(base64);
+        var len = binary_string.length;
+        var bytes = new Uint8Array(len);
+        for (var i = 0; i < len; i++) {
+            bytes[i] = binary_string.charCodeAt(i);
+        }
+        return bytes;
+    }
+
+    ToBase64 = function (u8) {
+        return btoa(String.fromCharCode.apply(null, u8));
+    };
+
+    FromBase64 = function (str) {
+        return atob(str).split('').map(function (c) {
+            return c.charCodeAt(0);
+        });
+    };
+
+    console.log("pub", ToBase64(keyPair.public));
+    console.log("priv", ToBase64(keyPair.private));
+    var write = new Uint8Array(1);
+    write[0] = 0x01;
+
+    var xhr = new XMLHttpRequest();
+    var url = "https://pspk.now.sh/";
+    xhr.open("POST", url, true);
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var json = JSON.parse(xhr.responseText);
+            var pub = _base64ToUint8Array(json.key);
+            var shared = axlsign.sharedKey(keyPair.private, pub);
+
+            console.log("shared", ToBase64(shared));
+
+            let import_shared = window.crypto.subtle.importKey(
+                "raw", // raw format of the key - should be Uint8Array
+                shared,
+                { // algorithm details
+                    name: "HMAC",
+                    hash: {name: "SHA-256"}
+                },
+                false, // export = false
+                ["sign", "verify"], // what this key can do
+            );
+            let sign = import_shared.then(importedKey => {
+                return window.crypto.subtle.sign(
+                    "HMAC",
+                    importedKey,
+                    write,)
+            });
+
+            let import_material_key = sign.then(function (material_key) {
+                return window.crypto.subtle.importKey(
+                    "raw", // raw format of the key - should be Uint8Array
+                    new Uint8Array(material_key),
+                    { // algorithm details
+                        name: "HKDF",
+                        hash: {name: "SHA-256"}
+                    },
+                    false, // export = false
+                    ["deriveBits", "deriveKey"], // what this key can do
+                );
+            });
+
+            let derivation = import_material_key.then(function (imported_key) {
+                const salt = new Uint8Array(32);
+                return window.crypto.subtle.deriveBits(
+                    {
+                        name: "HKDF",
+                        hash: "SHA-256",
+                        salt: salt.buffer,
+                        info: info.buffer,
+                    },
+                    imported_key,
+                    80 * 8,
+                );
+            });
+            derivation.then(
+                function (gkey) {
+                    console.log("key", ToBase64(new Uint8Array(gkey)))
+                    let import_key = window.crypto.subtle.importKey(
+                        "raw", // raw format of the key - should be Uint8Array
+                        gkey.slice(0, 32),
+                        { // algorithm details
+                            name: "AES-CBC",
+                        },
+                        false, // export = false
+                        ["decrypt", "encrypt"], // what this key can do
+                    );
+                    let aesEnc = import_key.then(function (key) {
+                        return window.crypto.subtle.encrypt(
+                            {
+                                name: "AES-CBC",
+                                iv: new Uint8Array(gkey).slice(64),
+                            },
+                            key,
+                            enc.encode(text),
+                        );
+                    });
+                    aesEnc.then(
+                        function (data) {
+                            var bdata = new Uint8Array(data);
+                            var pub = new Uint8Array(keyPair.public.length + bdata.length);
+                            pub.set(keyPair.public);
+                            pub.set(bdata, keyPair.public.length);
+                            console.log("data", ToBase64(pub));
+                        },
+                        function (e) {
+                            console.error("ecnrypt failed:", e.message)
+                        }
+                    );
+                },
+                function (e) {
+                    console.error("hmmm... derived failed:", e.message)
+                });
+        }
+    };
+    var data = JSON.stringify({"name": "bob"});
+    xhr.send(data);
+</script>
+</body>
+</html>
