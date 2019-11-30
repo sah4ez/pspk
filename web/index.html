@@ -116,12 +116,16 @@
     }
 
     function copyToClipboard() {
+        let copyText = window.document.getElementById("copy_enc");
+        copyText.select();
+        copyText.setSelectionRange(0, 99999);
+        document.execCommand('copy');
+
         const ele = document.createElement('div');
         ele.textContent = "Copied to clipboard!";
         ele.className = 'alert alert-primary';
         ele.setAttribute('role', 'alert');
         document.body.appendChild(ele);
-        document.execCommand('copy');
     }
 
     // Encode encrypted data
