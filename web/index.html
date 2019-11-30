@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
     <title>Title</title>
     <script src="./axlsign.js"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
@@ -113,6 +115,15 @@
         }
     }
 
+    function copyToClipboard() {
+        const ele = document.createElement('div');
+        ele.textContent = "Copied to clipboard!";
+        ele.className = 'alert alert-primary';
+        ele.setAttribute('role', 'alert');
+        document.body.appendChild(ele);
+        document.execCommand('copy');
+    }
+
     // Encode encrypted data
     function encodeEncrypt(data) {
         const bdata = new Uint8Array(data);
@@ -122,17 +133,8 @@
 
         let copyText = window.document.getElementById("copy_enc");
         copyText.value = ToBase64(pub);
-
-        const needCopy = window.document.getElementById("need_copy");
-        if (needCopy.value === "on") {
-            copyText.select();
-            copyText.setSelectionRange(0, 99999);
-            /*For mobile devices*/
-
-            /* Copy the text inside the text field */
-            document.execCommand("copy");
-            // alert('copied');
-        }
+        copyText.select();
+        copyText.setSelectionRange(0, 99999);
 
         console.log("encrypted data", ToBase64(pub));
     }
@@ -189,23 +191,38 @@
     }
 </script>
 
-<label>Encryption example</label><br>
-<label>
-    Name Public Key recipient
-    <input type="text" id="pub_name" title="Name Public Key recipient">
-</label><br>
-<label>
-    Text
-    <input type="text" id="text_enc" title="Text"><br>
-</label><br>
-<label>
-    Copy after encryption
-    <input type="checkbox" id="need_copy">
-</label><br>
-<input type="submit" value="Submit" onclick="encryptText()"><br>
-<label>
-    Encrypted
-    <textarea id="copy_enc" title="Encrypted" rows="2" cols="50"></textarea><br>
-</label><br>
+<div class="container">
+    <h3>Encryption example</h3>
+    <div class="col">
+        <div class="form-group">
+            <label for="pub_name">Name Public Key recipient</label>
+            <input type="text" class="form-control" id="pub_name" aria-label="Name Public Key recipient">
+        </div>
+        <div class="form-group">
+            <label for="text_enc">Text</label>
+            <textarea id="text_enc" class="form-control" title="Text" rows="2" cols="50"></textarea>
+        </div>
+        <div class="form-group">
+            <input type="button" class="btn btn-primary" value="Encrypt" id="enc" onclick="encryptText()">
+        </div>
+        <div class="form-group">
+            <label for="copy_enc">Encrypted</label>
+            <textarea id="copy_enc" class="form-control" title="Encrypted" rows="2" cols="50"></textarea><br>
+        </div>
+        <div class="form-group">
+            <input type="button" class="btn btn-primary" value="Copy" id="copy" onclick="copyToClipboard()">
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+        crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+        crossorigin="anonymous"></script>
 </body>
 </html>
