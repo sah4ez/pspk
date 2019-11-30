@@ -2,3 +2,4 @@ vendor
 bin
 test
 _build
+webasm
