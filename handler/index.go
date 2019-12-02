@@ -13,6 +13,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -28,6 +29,10 @@ const (
 	NameKey   = "name_key"
 	LinkKey   = "link"
 	OutputKey = "output"
+	LastIDKEy = "last_key"
+	LimitKey  = "limit"
+
+	maxLimit = 500
 )
 
 type Request struct {
@@ -254,13 +259,17 @@ func decode(result []Request) map[string]pub {
 	return keys
 }
 
-func LoadArray() (keys []Request, err error) {
+func LoadArray(lastID bson.ObjectId, limit int) (keys []Request, err error) {
 	sess := session.Copy()
 	defer sess.Close()
 
 	c := sess.DB("pspk").C("keys")
 
-	err = c.Find(bson.M{}).All(&keys)
+	query := bson.M{}
+	if lastID != "" {
+		query["_id"] = bson.M{"$gt": lastID}
+	}
+	err = c.Find(query).Limit(limit).All(&keys)
 	if err != nil {
 		return
 	}
@@ -268,7 +277,7 @@ func LoadArray() (keys []Request, err error) {
 	return
 }
 
-func Load() (keys map[string]pub, err error) {
+func Load(lastID bson.ObjectId, limit int) (keys map[string]pub, err error) {
 	keys = map[string]pub{}
 	sess := session.Copy()
 	defer sess.Close()
@@ -277,7 +286,11 @@ func Load() (keys map[string]pub, err error) {
 
 	result := []Request{}
 
-	err = c.Find(bson.M{}).All(&result)
+	query := bson.M{}
+	if lastID != "" {
+		query["_id"] = bson.M{"$gt": lastID}
+	}
+	err = c.Find(query).Limit(limit).All(&result)
 	if err != nil {
 		return
 	}
@@ -418,8 +431,26 @@ func GetByLink(w io.Writer, r *http.Request) (err error) {
 	return
 }
 
+func loadPagination(r *http.Request) (id bson.ObjectId, limit int) {
+	query := r.URL.Query()
+
+	id = bson.ObjectIdHex(query.Get(LastIDKEy))
+	limit_str := query.Get(LimitKey)
+
+	limit, err := strconv.Atoi(limit_str)
+	if err != nil {
+		limit = maxLimit
+	}
+	if limit > maxLimit {
+		limit = maxLimit
+	}
+
+	return
+}
+
 func GetKeysInJson(w io.Writer, r *http.Request) (err error) {
-	data, err := Load()
+	lastID, limit := loadPagination(r)
+	data, err := Load(lastID, limit)
 	if err != nil {
 		return err
 	}
@@ -429,7 +460,8 @@ func GetKeysInJson(w io.Writer, r *http.Request) (err error) {
 }
 
 func GetKeysInJsonArray(w io.Writer, r *http.Request) (err error) {
-	data, err := LoadArray()
+	lastID, limit := loadPagination(r)
+	data, err := LoadArray(lastID, limit)
 	if err != nil {
 		return err
 	}
@@ -459,7 +491,7 @@ func Get(w io.Writer, r *http.Request) (err error) {
 		}
 
 	} else {
-		keys, err = Load()
+		keys, err = Load("", maxLimit)
 		if err != nil {
 			return fmt.Errorf("load all key: %s", err.Error())
 		}
