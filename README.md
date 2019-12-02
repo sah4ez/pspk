@@ -73,9 +73,19 @@ response:
 
 POST:
 
-- post data `POST /` with body `{"method":"link","data":"base64=="}`, response `{"link":"5d06a65da5cdb90006989577"}`
-- publish key `POST /` with body `{"name":"alice","key":"base64=="}`, response `{"msg":"added"}`
-- get key nmae `POST /` with body `{"name":"alice"}`, response `{"msg":"base64=="}`
+- post data `POST /` with body `{"method":"link","data":"base64=="}`, response 
+```json
+{"link":"5d06a65da5cdb90006989577"}
+```
+
+- publish key `POST /` with body `{"name":"alice","key":"base64=="}`, response 
+```json
+{"msg":"added"}
+```
+- get key nmae `POST /` with body `{"name":"alice"}`, response 
+```json
+{"msg":"base64=="}
+```
 
 
 ## pspk cli usage
