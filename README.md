@@ -54,6 +54,20 @@ curl -X POST "https://pspk.now.sh" -d '{"name":"Some.Name"}'
 {"access":true,"key":"wTaZA5+QeZpby33W2T5uV8TweWaPEZn3clTe5xkmb2M="}
 ```
 
+### API
+
+GET:
+
+- get keys: `GET /` - response html page
+- get keys in json: `GET /?output=json` - response `{"pub_name1":"base64==",...}`
+- get key by name: `GET /?name_key=alice" - response `{"alice":"base64=="}`
+
+POST:
+
+- load data by link: `{"method":"link","data":"base64=="}`
+- publish key: `{"name":"alice","key":"base64=="}`
+- get key by name: `{"name":"alice"}`
+
 ## pspk cli usage
 
 `pspk` - console tool which use API to pspk and implement encryption/decryption for one or several recipients.
