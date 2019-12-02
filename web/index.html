@@ -15,6 +15,7 @@
 <script type="text/javascript">
     // some constants
     const enc = new TextEncoder();
+    const dec = new TextDecoder();
     const info = enc.encode("pspk_info");
     let write = new Uint8Array(1);
     write[0] = 0x01;
@@ -115,17 +116,55 @@
         }
     }
 
-    function copyToClipboard() {
+    function decryptByAESKeyOption(iv, data) {
+        return function (key) {
+            return crypto.subtle.decrypt(
+                {
+                    name: "AES-CBC",
+                    iv: new Uint8Array(iv).slice(64),
+                },
+                key,
+                data,
+            );
+        }
+    }
+
+    function copyEncToClipboard() {
         let copyText = window.document.getElementById("copy_enc");
         copyText.select();
         copyText.setSelectionRange(0, 99999);
         document.execCommand('copy');
 
+        const delEle = document.getElementById('copy_enc_alert');
+		if (delEle !== null) {
+			document.body.removeChild(delEle);
+		}
+
         const ele = document.createElement('div');
-        ele.textContent = "Copied to clipboard!";
+		ele.id = 'copy_enc_alert'
+        ele.textContent = "Copied encoded to clipboard!";
         ele.className = 'alert alert-primary';
         ele.setAttribute('role', 'alert');
-        document.body.appendChild(ele);
+		document.body.appendChild(ele);
+    }
+
+    function copyDecToClipboard() {
+        let copyText = window.document.getElementById("copy_dec");
+        copyText.select();
+        copyText.setSelectionRange(0, 99999);
+        document.execCommand('copy');
+
+        const delEle = document.getElementById('copy_dec_alert');
+		if (delEle !== null) {
+			document.body.removeChild(delEle);
+		}
+
+        const ele = document.createElement('div');
+		ele.id = 'copy_dec_alert'
+        ele.textContent = "Copied text to clipboard!";
+        ele.className = 'alert alert-primary';
+        ele.setAttribute('role', 'alert');
+		document.body.appendChild(ele);
     }
 
     // Encode encrypted data
@@ -143,17 +182,41 @@
         console.log("encrypted data", ToBase64(pub));
     }
 
+    // Encode encrypted data
+    function decodeDecrypt(data) {
+        let copyText = window.document.getElementById("copy_dec");
+        copyText.value = dec.decode(data);
+        copyText.select();
+        copyText.setSelectionRange(0, 99999);
+
+        console.log("encrypted data", dec.decode(data));
+    }
+
     function aesEncCatch(e) {
         console.error("encrypt failed:", e.message)
     }
 
+    function aesDecCatch(e) {
+        console.error("decrypt failed:", e.message)
+    }
+
     // Encrtyp text by derived key via AES
-    function encryptBeAES(text) {
+    function encryptByAES(text) {
         return function (key) {
             // just for debug
             // console.log("key", ToBase64(new Uint8Array(gkey)))
             let aesEnc = importAESKey(key).then(encryptByAESKeyOption(key, text));
             aesEnc.then(encodeEncrypt, aesEncCatch);
+        }
+    }
+
+    // Encrtyp text by derived key via AES
+    function decryptByAES(data) {
+        return function (key) {
+            // just for debug
+            // console.log("key", ToBase64(new Uint8Array(gkey)))
+            let aesDec = importAESKey(key).then(decryptByAESKeyOption(key, data));
+            aesDec.then(decodeDecrypt, aesDecCatch);
         }
     }
 
@@ -173,7 +236,21 @@
 
         let derivation = materialKey.then(derivedKey);
 
-        derivation.then(encryptBeAES(text), derivationCatch)
+        derivation.then(encryptByAES(text), derivationCatch)
+    }
+
+    function decrypt(priv, pub, data) {
+
+        const shared = axlsign.sharedKey(priv, pub);
+        // just for debug
+        // console.log("shared", ToBase64(shared));
+        let sign = importShared(shared).then(signByShared);
+
+        let materialKey = sign.then(importMaterialKey);
+
+        let derivation = materialKey.then(derivedKey);
+
+        derivation.then(decryptByAES(data), derivationCatch)
     }
 
     function encryptText() {
@@ -193,11 +270,25 @@
         const data = JSON.stringify({"name": pubName});
         xhr.send(data);
     }
+
+    function decryptText() {
+        // Init elements of UI
+        const keyBase64 = window.document.getElementById("private_key").value;
+        const textBase64 = window.document.getElementById("text_dec").value;
+
+		const messageBytes = _base64ToUint8Array(textBase64);
+		const pubKey = messageBytes.slice(0, 32);
+		const data = messageBytes.slice(32);
+
+		const privKey = _base64ToUint8Array(keyBase64);
+
+		decrypt(privKey, pubKey, data);
+    }
 </script>
 
-<div class="container">
-    <h3 class="d-flex justify-content-center">Encrypt it!</h3>
+<div class="container d-flex justify-content-center">
     <div class="col">
+        <h3 class="d-flex justify-content-center">Encrypt it!</h3>
         <div class="form-group">
             <label for="pub_name">Name Public Key recipient</label>
             <input type="text" class="form-control" id="pub_name" aria-label="Name Public Key recipient">
@@ -214,9 +305,30 @@
             <textarea id="copy_enc" class="form-control" title="Encrypted" rows="2" cols="50"></textarea><br>
         </div>
         <div class="form-group">
-            <input type="button" class="btn btn-primary" value="Copy" id="copy" onclick="copyToClipboard()">
+            <input type="button" class="btn btn-primary" value="Copy" id="copy_enc" onclick="copyEncToClipboard()">
         </div>
     </div>
+	<div class="col">
+        <h3 class="d-flex justify-content-center">Dencrypt it!</h3>
+        <div class="form-group">
+            <label for="private_key">Private key base64</label>
+            <input type="text" class="form-control" id="private_key" aria-label="Private key base64">
+        </div>
+        <div class="form-group">
+            <label for="text_dec">Base64</label>
+            <textarea id="text_dec" class="form-control" title="Base64" rows="2" cols="50"></textarea>
+        </div>
+        <div class="form-group">
+            <input type="button" class="btn btn-primary" value="Decrypt" id="enc" onclick="decryptText()">
+        </div>
+        <div class="form-group">
+            <label for="copy_dec">Decrypted</label>
+            <textarea id="copy_dec" class="form-control" title="Decrypted" rows="2" cols="50"></textarea><br>
+        </div>
+        <div class="form-group">
+            <input type="button" class="btn btn-primary" value="Copy" id="copy_dec" onclick="copyDecToClipboard()">
+        </div>
+	</div>
 </div>
 
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
