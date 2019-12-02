@@ -31,10 +31,11 @@ const (
 )
 
 type Request struct {
-	Name   string `json:"name,omitempty" bson:"name"`
-	Key    string `json:"key,omitempty" bson:"key"`
-	Method string `json:"method,omitempty" bson:"-"`
-	Data   string `json:"data,omitempty" bson:"-"`
+	ID     bson.ObjectId `json:"id,omitempty" bson:"_id"`
+	Name   string        `json:"name,omitempty" bson:"name"`
+	Key    string        `json:"key,omitempty" bson:"key"`
+	Method string        `json:"method,omitempty" bson:"-"`
+	Data   string        `json:"data,omitempty" bson:"-"`
 }
 
 var (
@@ -99,9 +100,17 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			}
 			return
 		}
-		if r.URL.Query().Get(OutputKey) == "json" {
+		switch r.URL.Query().Get(OutputKey) {
+		case "json", "json-map":
 			w.Header().Set("Content-Type", "application/json")
 			if err := GetKeysInJson(w, r); err != nil {
+				resp["error"] = err.Error()
+				json.NewEncoder(w).Encode(resp)
+			}
+			return
+		case "json-array":
+			w.Header().Set("Content-Type", "application/json")
+			if err := GetKeysInJsonArray(w, r); err != nil {
 				resp["error"] = err.Error()
 				json.NewEncoder(w).Encode(resp)
 			}
@@ -243,6 +252,20 @@ func decode(result []Request) map[string]pub {
 		keys[k.Name] = b
 	}
 	return keys
+}
+
+func LoadArray() (keys []Request, err error) {
+	sess := session.Copy()
+	defer sess.Close()
+
+	c := sess.DB("pspk").C("keys")
+
+	err = c.Find(bson.M{}).All(&keys)
+	if err != nil {
+		return
+	}
+
+	return
 }
 
 func Load() (keys map[string]pub, err error) {
@@ -397,6 +420,16 @@ func GetByLink(w io.Writer, r *http.Request) (err error) {
 
 func GetKeysInJson(w io.Writer, r *http.Request) (err error) {
 	data, err := Load()
+	if err != nil {
+		return err
+	}
+	enc := json.NewEncoder(w)
+	err = enc.Encode(data)
+	return
+}
+
+func GetKeysInJsonArray(w io.Writer, r *http.Request) (err error) {
+	data, err := LoadArray()
 	if err != nil {
 		return err
 	}
