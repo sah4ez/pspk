@@ -23,7 +23,7 @@
 		<a class="nav-link" href="./decrypt.html">Decrypt</a>
 	</li>
 	<li class="nav-item">
-		<a class="nav-link" href="#">Keys</a>
+		<a class="nav-link" href="./keys.html">Keys</a>
 	</li>
 </ul>
 <div class="container d-flex justify-content-center">
@@ -32,6 +32,22 @@
         <div class="form-group">
 			Application for ecnryption/decryption, signin/verify any digital information.
 			Also free storage for you public part of ECDH x25519 keys.
+        </div>
+        <div class="form-group">
+            <label for="pub_name">Your Public name</label>
+            <input type="text" class="form-control" id="pub_name" aria-label="Name Public Key recipient">
+        </div>
+        <div class="form-group">
+            <label for="pub_key">Public key</label>
+            <input type="text" class="form-control" id="pub_key">
+        </div>
+        <div class="form-group">
+            <label class="alert-danger" for="priv_key">Private key, save it!</label>
+            <input type="text" class="form-control" id="priv_key">
+        </div>
+        <div class="form-group">
+            <input type="button" class="btn btn-primary" value="Publish" id="enc" onclick="publishKey()">
+            <input type="button" class="btn btn-primary" value="Copy" id="enc" onclick="copyPrivateKey()">
         </div>
     </div>
 </div>

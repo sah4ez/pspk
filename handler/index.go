@@ -37,7 +37,7 @@ const (
 )
 
 type Request struct {
-	ID     bson.ObjectId `json:"id,omitempty" bson:"_id"`
+	ID     bson.ObjectId `json:"id,omitempty" bson:"_id,omitempty"`
 	Name   string        `json:"name,omitempty" bson:"name"`
 	Key    string        `json:"key,omitempty" bson:"key"`
 	Method string        `json:"method,omitempty" bson:"-"`

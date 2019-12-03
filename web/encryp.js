@@ -269,3 +269,100 @@ function decryptText() {
 
 	decrypt(privKey, pubKey, data);
 }
+
+function findByName() {
+	// Init elements of UI
+	const name = window.document.getElementById("pub_name").value;
+
+
+	var url = "https://pspk.now.sh/";
+	var params = "?name_regex="+name;
+
+	var table = new DataTable(".table", {
+		ajax: {
+			url: url+params,
+			content: {
+				type: "json",
+				headings: true
+			}
+		}
+	});
+}
+
+function clearPulbishKeyAlert() {
+	const alertDel = document.getElementById('publish_alert');
+	if (alertDel !== null) {
+		document.body.removeChild(alertDel);
+	}
+	const publicDel = document.getElementById('public_key');
+	if (publicDel !== null) {
+		document.body.removeChild(publicDel);
+	}
+	const privateDel = document.getElementById('private_key');
+	if (privateDel !== null) {
+		document.body.removeChild(privateDel);
+	}
+	const delEle = document.getElementById('priv_key_alert');
+	if (delEle !== null) {
+		document.body.removeChild(delEle);
+	}
+}
+
+function copyPrivateKey() {
+	let copyText = window.document.getElementById("priv_key");
+	copyText.select();
+	copyText.setSelectionRange(0, 99999);
+	document.execCommand('copy');
+
+	clearPulbishKeyAlert();
+
+	const ele = document.createElement('div');
+	ele.id = 'priv_key_alert'
+	ele.textContent = "Copied encoded!";
+	ele.className = 'alert alert-primary';
+	ele.setAttribute('role', 'alert');
+	document.body.appendChild(ele);
+}
+
+function publishKey() {
+	// Init elements of UI
+	const name = window.document.getElementById("pub_name").value;
+	const pub = ToBase64(new Uint8Array(keyPair.public));
+	const key = ToBase64(new Uint8Array(keyPair.private));
+
+	var xhr = new XMLHttpRequest();
+	var url = "https://pspk.sah4ez.now.sh";
+	xhr.open("POST", url, true);
+	xhr.onreadystatechange = function () {
+		if (xhr.readyState === 2 && xhr.status === 201) {
+			clearPulbishKeyAlert();
+
+			const alertEle = document.createElement('div');
+			alertEle.id = 'publish_alert'
+			alertEle.textContent = "Key published!";
+			alertEle.className = 'alert alert-primary';
+			alertEle.setAttribute('role', 'alert');
+			document.body.appendChild(alertEle);
+
+			const pubKey = document.getElementById('pub_key');
+			pubKey.value = pub
+
+			const privKey = document.getElementById('priv_key');
+			privKey.value = key
+		}
+
+		if (xhr.readyState === 2 && xhr.status === 400) {
+			clearPulbishKeyAlert();
+
+			const alertEle = document.createElement('div');
+			alertEle.id = 'publish_alert'
+			alertEle.textContent = "Key with name: "+name+" exists";
+			alertEle.className = 'alert alert-warning';
+			alertEle.setAttribute('role', 'alert');
+			document.body.appendChild(alertEle);
+		}
+	};
+
+	const data = JSON.stringify({"name": name, "key": pub});
+	xhr.send(data);
+}

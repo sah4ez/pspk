@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-    <title>Encrypt it!</title>
+    <title>Keys!</title>
     <script src="./axlsign.js"></script>
     <script src="./encryp.js"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
@@ -14,42 +14,37 @@
 
 <ul class="nav">
 	<li class="nav-item">
-		<a class="nav-link active" href="./index.html">About</a>
+		<a class="nav-link active" href="./index.html#">About</a>
 	</li>
 	<li class="nav-item">
-		<a class="nav-link active" href="#">Encrypt</a>
+		<a class="nav-link active" href="./encrypt.html">Encrypt</a>
 	</li>
 	<li class="nav-item">
 		<a class="nav-link" href="./decrypt.html">Decrypt</a>
 	</li>
 	<li class="nav-item">
-		<a class="nav-link" href="./keys.html">Keys</a>
+		<a class="nav-link" href="./#">Keys</a>
 	</li>
 </ul>
 <div class="container d-flex justify-content-center">
     <div class="col">
-        <h3 class="d-flex justify-content-center">Encrypt it!</h3>
+        <h3 class="d-flex justify-content-center">Search key</h3>
         <div class="form-group">
-            <label for="pub_name">Name Public Key recipient</label>
+            <label for="pub_name">Find by name </label>
             <input type="text" class="form-control" id="pub_name" aria-label="Name Public Key recipient">
         </div>
         <div class="form-group">
-            <label for="text_enc">Text</label>
-            <textarea id="text_enc" class="form-control" title="Text" rows="2" cols="50"></textarea>
+            <input type="button" class="btn btn-primary" value="Find" id="enc" onclick="findByName()">
+            <input type="button" class="btn btn-primary" value="Clear" id="enc" onclick="window.location.reload(false)">
         </div>
-        <div class="form-group">
-            <input type="button" class="btn btn-primary" value="Encrypt" id="enc" onclick="encryptText()">
-        </div>
-        <div class="form-group">
-            <label for="copy_enc">Encrypted</label>
-            <textarea id="copy_enc" class="form-control" title="Encrypted" rows="2" cols="50"></textarea><br>
-        </div>
-        <div class="form-group">
-            <input type="button" class="btn btn-primary" value="Copy" id="copy_enc" onclick="copyEncToClipboard()">
-        </div>
+		<table class="table"></table>
     </div>
 </div>
 
+<link href="https://unpkg.com/vanilla-datatables@latest/dist/vanilla-dataTables.min.css" 
+	  rel="stylesheet" type="text/css">
+<script src="https://unpkg.com/vanilla-datatables@latest/dist/vanilla-dataTables.min.js" 
+	    type="text/javascript"></script>
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
         integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
         crossorigin="anonymous"></script>
