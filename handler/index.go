@@ -26,11 +26,12 @@ import (
 type pub []byte
 
 const (
-	NameKey   = "name_key"
-	LinkKey   = "link"
-	OutputKey = "output"
-	LastIDKEy = "last_key"
-	LimitKey  = "limit"
+	NameKey       = "name_key"
+	NameSearchKey = "name_regex"
+	LinkKey       = "link"
+	OutputKey     = "output"
+	LastIDKEy     = "last_key"
+	LimitKey      = "limit"
 
 	maxLimit = 500
 )
@@ -95,17 +96,16 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 	value := r.Header.Get("X-Access-Token")
 
-	resp["access"] = value == token
-
 	if r.Method == http.MethodGet {
-		if r.URL.Query().Get(LinkKey) != "" {
+		query := r.URL.Query()
+		if query.Get(LinkKey) != "" {
 			if err := GetByLink(w, r); err != nil {
 				resp["error"] = err.Error()
 				json.NewEncoder(w).Encode(resp)
 			}
 			return
 		}
-		switch r.URL.Query().Get(OutputKey) {
+		switch query.Get(OutputKey) {
 		case "json", "json-map":
 			w.Header().Set("Content-Type", "application/json")
 			if err := GetKeysInJson(w, r); err != nil {
@@ -121,12 +121,47 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			}
 			return
 		}
+		if name := query.Get(NameKey); name != "" {
+			w.Header().Set("Content-Type", "application/json")
+			var key Request
+			key, err = ByName(name)
+			if err != nil {
+				resp["error"] = err.Error()
+				json.NewEncoder(w).Encode(resp)
+				return
+			}
+
+			if err = json.NewEncoder(w).Encode([]Request{key}); err != nil {
+				resp["error"] = err.Error()
+				json.NewEncoder(w).Encode(resp)
+				return
+			}
+			return
+		}
+		if name := query.Get(NameSearchKey); name != "" {
+			w.Header().Set("Content-Type", "application/json")
+			keys, err := FindByName(name)
+			if err != nil {
+				resp["error"] = err.Error()
+				json.NewEncoder(w).Encode(resp)
+				return
+			}
+
+			if err = json.NewEncoder(w).Encode(keys); err != nil {
+				resp["error"] = err.Error()
+				json.NewEncoder(w).Encode(resp)
+				return
+			}
+
+			return
+		}
 		if err := Get(w, r); err != nil {
 			resp["error"] = err.Error()
 			json.NewEncoder(w).Encode(resp)
 			return
 		}
 	}
+	resp["access"] = value == token
 
 	defer func() {
 		if err != nil {
@@ -333,20 +368,17 @@ func GenerateLinkId(data string) (id string, err error) {
 	return link.ID.Hex(), err
 }
 
-func FindByName(name string) (keys map[string]pub, err error) {
+func FindByName(name string) (result []Request, err error) {
 	sess := session.Copy()
 	defer sess.Close()
 
 	c := sess.DB("pspk").C("keys")
 
-	result := []Request{}
-
-	err = c.Find(bson.M{"name": "/.*" + name + ".*/"}).All(&result)
+	err = c.Find(bson.M{"name": bson.RegEx{Pattern: name + ".*"}}).Sort("name").All(&result)
 	if err != nil {
 		return
 	}
 
-	keys = decode(result)
 	return
 }
 
@@ -482,19 +514,9 @@ func Get(w io.Writer, r *http.Request) (err error) {
 
 	var keys map[string]pub
 
-	query := r.URL.Query()
-	name := query.Get(NameKey)
-	if name != "" {
-		keys, err = FindByName(name)
-		if err != nil {
-			return fmt.Errorf("load key by name: %s", err.Error())
-		}
-
-	} else {
-		keys, err = Load("", maxLimit)
-		if err != nil {
-			return fmt.Errorf("load all key: %s", err.Error())
-		}
+	keys, err = Load("", maxLimit)
+	if err != nil {
+		return fmt.Errorf("load all key: %s", err.Error())
 	}
 
 	err = tmpl.Execute(w, PspkStore{
