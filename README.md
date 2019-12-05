@@ -22,7 +22,7 @@ This service solve problem for persistent saving public key and send to recipien
 - [ ] verification of signature by link
 - [ ] QR codes
 - [ ] simple cli tool
-- [ ] simple web-application
+- [x] simple web-application. See: https://freecontent.space
 - [ ] simple iOS client
 - [ ] simple android client
 - [x] local http server to pspk API
