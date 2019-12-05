@@ -77,7 +77,7 @@ func EphemeralEncrypt() cli.Command {
 			pubName := c.Args()[0]
 			message := c.Args()[1:]
 
-			pubEphemeral, privEphemeral, err := keys.GenereateDH()
+			pubEphemeral, privEphemeral, err := keys.GenerateDH()
 			if err != nil {
 				return err
 			}
@@ -182,7 +182,7 @@ func EphemeralEncrypGroup() cli.Command {
 				return err
 			}
 
-			pubEphemeral, _, err := keys.GenereateDH()
+			pubEphemeral, _, err := keys.GenerateDH()
 			if err != nil {
 				return err
 			}

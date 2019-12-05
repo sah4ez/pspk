@@ -20,7 +20,7 @@ func Group() cli.Command {
 			if name == "" {
 				return fmt.Errorf("empty name use  --name")
 			}
-			pub, priv, err := keys.GenereateDH()
+			pub, priv, err := keys.GenerateDH()
 			if err != nil {
 				return err
 			}
