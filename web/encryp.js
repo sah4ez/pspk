@@ -13,6 +13,9 @@ const keyPair = axlsign.generateKeyPair(seed);
 // just for debug
 // console.log("pub", ToBase64(keyPair.public));
 // console.log("priv", ToBase64(keyPair.private));
+//
+//
+document.getElementById('file_upload').addEventListener('change', readFile, false);
 
 function _base64ToUint8Array(base64) {
 	var binary_string = window.atob(base64);
@@ -88,7 +91,7 @@ function importAESKey(key) {
 }
 
 // Encrypt text as string by IV and imported AES key
-function encryptByAESKeyOption(iv, text) {
+function encryptByAESKeyOption(iv, data) {
 	return function (key) {
 		return crypto.subtle.encrypt(
 			{
@@ -96,7 +99,7 @@ function encryptByAESKeyOption(iv, text) {
 				iv: new Uint8Array(iv).slice(64),
 			},
 			key,
-			enc.encode(text),
+			data,
 		);
 	}
 }
@@ -186,11 +189,11 @@ function aesDecCatch(e) {
 }
 
 // Encrtyp text by derived key via AES
-function encryptByAES(text) {
+function encryptByAES(data) {
 	return function (key) {
 		// just for debug
 		// console.log("key", ToBase64(new Uint8Array(gkey)))
-		let aesEnc = importAESKey(key).then(encryptByAESKeyOption(key, text));
+		let aesEnc = importAESKey(key).then(encryptByAESKeyOption(key, data));
 		aesEnc.then(encodeEncrypt, aesEncCatch);
 	}
 }
@@ -209,7 +212,7 @@ function derivationCatch(e) {
 	console.error("hmmm... derived failed:", e.message)
 }
 
-function encrypt(json, text) {
+function encrypt(json, data) {
 	const pub = _base64ToUint8Array(json.key);
 
 	const shared = axlsign.sharedKey(keyPair.private, pub);
@@ -221,7 +224,7 @@ function encrypt(json, text) {
 
 	let derivation = materialKey.then(derivedKey);
 
-	derivation.then(encryptByAES(text), derivationCatch)
+	derivation.then(encryptByAES(data), derivationCatch)
 }
 
 function decrypt(priv, pub, data) {
@@ -248,12 +251,58 @@ function encryptText() {
 	xhr.open("POST", url, true);
 	xhr.onreadystatechange = function () {
 		if (xhr.readyState === 4 && xhr.status === 200) {
-			encrypt(JSON.parse(xhr.responseText), text)
+			encrypt(JSON.parse(xhr.responseText), enc.encode(text))
 		}
 	};
 
 	const data = JSON.stringify({"name": pubName});
 	xhr.send(data);
+}
+
+var fileContent 
+
+function readFile(evt) {
+	var files = evt.target.files; // FileList object
+
+	// Loop through the FileList and render image files as thumbnails.
+	for (var i = 0, f; f = files[i]; i++) {
+
+		var reader = new FileReader();
+
+		// Closure to capture the file information.
+		reader.onload = (function(theFile) {
+			// Render thumbnail.
+			theFile.arrayBuffer().then(ee => {
+					fileContent = new Uint8Array(ee)
+			})
+		})(f);
+
+		// Read in the image file as a data URL.
+		reader.readAsDataURL(f);
+    }
+}
+
+function encryptFile() {
+	// Check for the various File API support.
+	if (window.File && window.FileReader && window.FileList && window.Blob) {
+		// Init elements of UI
+		const pubName = window.document.getElementById("pub_name").value;
+		// const file = window.document.getElementById("file_upload").value;
+
+		var xhr = new XMLHttpRequest();
+		var url = "https://pspk.now.sh/";
+		xhr.open("POST", url, true);
+		xhr.onreadystatechange = function () {
+			if (xhr.readyState === 4 && xhr.status === 200) {
+				encrypt(JSON.parse(xhr.responseText), fileContent)
+			}
+		};
+
+		const data = JSON.stringify({"name": pubName});
+		xhr.send(data);
+	} else {
+	  alert('The File APIs are not fully supported in this browser.');
+	}
 }
 
 function decryptText() {

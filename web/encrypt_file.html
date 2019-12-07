@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-    <title>Decrypt it!</title>
+    <title>Encrypt it!</title>
     <script src="./axlsign.js"></script>
-    <script src="./encryp.js"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
           integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 </head>
@@ -20,37 +19,38 @@
 		<a class="nav-link active" href="./encrypt.html">Encrypt</a>
 	</li>
 	<li class="nav-item">
-		<a class="nav-link active" href="./encrypt_file.html">Encrypt File</a>
+		<a class="nav-link active" href="#">Encrypt File</a>
 	</li>
 	<li class="nav-item">
-		<a class="nav-link" href="#">Decrypt</a>
+		<a class="nav-link" href="./decrypt.html">Decrypt</a>
 	</li>
 	<li class="nav-item">
 		<a class="nav-link" href="./keys.html">Keys</a>
 	</li>
 </ul>
 <div class="container d-flex justify-content-center">
-	<div class="col">
-        <h3 class="d-flex justify-content-center">Dencrypt it!</h3>
+    <div class="col">
+        <h3 class="d-flex justify-content-center">Encrypt it!</h3>
         <div class="form-group">
-            <label for="private_key">Private key base64</label>
-            <input type="text" class="form-control" id="private_key" aria-label="Private key base64">
+            <label for="pub_name">Name Public Key recipient</label>
+            <input type="text" class="form-control" id="pub_name" aria-label="Name Public Key recipient">
         </div>
         <div class="form-group">
-            <label for="text_dec">Base64</label>
-            <textarea id="text_dec" class="form-control" title="Base64" rows="2" cols="50"></textarea>
+            <label for="pub_name">File for upload</label>
+            <input type="file" class="form-control" name="files[]" id="file_upload" multiple>
         </div>
         <div class="form-group">
-            <input type="button" class="btn btn-primary" value="Decrypt" id="enc" onclick="decryptText()">
-            <input type="button" class="btn btn-primary" value="Copy" id="copy_dec_btn" onclick="copyDecToClipboard()">
+            <input type="button" class="btn btn-primary" value="Encrypt" id="enc" onclick="encryptFile()">
+            <input type="button" class="btn btn-primary" value="Copy" id="copy_enc_btn" onclick="copyEncToClipboard()">
         </div>
         <div class="form-group">
-            <label for="copy_dec">Decrypted</label>
-            <textarea id="copy_dec" class="form-control" title="Decrypted" rows="2" cols="50"></textarea><br>
+            <label for="copy_enc">Encrypted</label>
+            <textarea id="copy_enc" class="form-control" title="Encrypted" rows="2" cols="50"></textarea><br>
         </div>
-	</div>
+    </div>
 </div>
 
+<script src="./encryp.js"></script>
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
         integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
         crossorigin="anonymous"></script>
