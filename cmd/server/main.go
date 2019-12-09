@@ -6,6 +6,8 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/pkg/errors"
 	"github.com/sah4ez/pspk/handler"
@@ -40,6 +42,9 @@ func main() {
 
 	http.HandleFunc("/", handler.Handler)
 
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, syscall.SIGINT)
+
 	errs := make(chan error)
 
 	go func() {
@@ -48,9 +53,13 @@ func main() {
 		errs <- errors.Wrap(err, "Failed listening server")
 	}()
 
-	err := <-errs
-	if err != nil {
-		fmt.Fprintln(output, err.Error())
-		os.Exit(1)
-	}
+	go func() {
+		if err := <-errs; err != nil {
+			fmt.Fprintln(output, err.Error())
+			os.Exit(1)
+		}
+	}()
+
+	<-shutdown
+	fmt.Fprintln(output, "Server terminated")
 }
