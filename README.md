@@ -22,7 +22,7 @@ This service solve problem for persistent saving public key and send to recipien
 - [ ] verification of signature by link
 - [ ] QR codes
 - [ ] simple cli tool
-- [ ] simple web-application
+- [x] simple web-application. See: https://freecontent.space
 - [ ] simple iOS client
 - [ ] simple android client
 - [x] local http server to pspk API
@@ -53,6 +53,48 @@ Read public key:
 curl -X POST "https://pspk.now.sh" -d '{"name":"Some.Name"}'
 {"access":true,"key":"wTaZA5+QeZpby33W2T5uV8TweWaPEZn3clTe5xkmb2M="}
 ```
+
+### API
+
+GET:
+
+- get all keys in json array `GET /?output=json-array&limit=500&last_key=&last_key=5c93d5b8149588f7c7638546` 
+response:
+```json
+[
+	{"id":"5c952b5e149588f7c777c7b6","name":"x1","key":"wTaZA5+QeZpby33W2T5uV8TweWaPEZn3clTe5xkmb2M="},
+	{"id":"5c952b62149588f7c777ca52","name":"x2","key":"ApYM2UsdUxFas5AF16W605950ke2iXPd5sDhg287xnM="}
+]
+```
+- get data by link `GET /?link=5d06a65da5cdb90006989577` response: 
+```json
+{"data":"123"}
+```
+- get by full name `GET /?name_key=alice` response
+```
+[{"id":"5c9bd58b149588f7c71bce91","name":"alice","key":"E7+TL112lj1GmJRHf9jT5MZJDgYIhUbtBLc4/ZFMZ5c="}]
+```
+- get by regexp `name.*` `GET /?name_regex=Some` response
+```
+[{"id":"5c9bd58b149588f7c71bce91","name":"Some.Name","key":"E7+TL112lj1GmJRHf9jT5MZJDgYIhUbtBLc4/ZFMZ5c="},...]
+```
+
+POST:
+
+- post data `POST /` with body `{"method":"link","data":"base64=="}`, response 
+```json
+{"link":"5d06a65da5cdb90006989577"}
+```
+
+- publish key `POST /` with body `{"name":"alice","key":"base64=="}`, response 
+```json
+{"msg":"added"}
+```
+- get key nmae `POST /` with body `{"name":"alice"}`, response 
+```json
+{"msg":"base64=="}
+```
+
 
 ## pspk cli usage
 

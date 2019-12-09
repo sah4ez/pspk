@@ -24,4 +24,4 @@ clean:
 	rm -rf _build
 
 release_web:
-	scp ./web/axlsign.js ./web/index.html ${FREECONTENT_SPACE}:/var/www/pspk/
+	scp ./web/*  ${FREECONTENT_SPACE}:/var/www/pspk/

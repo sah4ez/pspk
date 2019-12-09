@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-    <title>About!</title>
+    <title>Encrypt it!</title>
     <script src="./axlsign.js"></script>
     <script src="./encryp.js"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
@@ -14,10 +14,10 @@
 
 <ul class="nav">
 	<li class="nav-item">
-		<a class="nav-link active" href="#">About</a>
+		<a class="nav-link active" href="./index.html">About</a>
 	</li>
 	<li class="nav-item">
-		<a class="nav-link active" href="./encrypt.html">Encrypt</a>
+		<a class="nav-link active" href="#">Encrypt</a>
 	</li>
 	<li class="nav-item">
 		<a class="nav-link" href="./decrypt.html">Decrypt</a>
@@ -28,26 +28,22 @@
 </ul>
 <div class="container d-flex justify-content-center">
     <div class="col">
-        <h3 class="d-flex justify-content-center">About</h3>
+        <h3 class="d-flex justify-content-center">Encrypt it!</h3>
         <div class="form-group">
-			Application for encryption/decryption, sign/verify any digital information.
-			Also free storage for your public parts of ECDH x25519 keys.
-        </div>
-        <div class="form-group">
-            <label for="pub_name">Your Public name</label>
+            <label for="pub_name">Name Public Key recipient</label>
             <input type="text" class="form-control" id="pub_name" aria-label="Name Public Key recipient">
         </div>
         <div class="form-group">
-            <label for="pub_key">Public key</label>
-            <input type="text" class="form-control" id="pub_key">
+            <label for="text_enc">Text</label>
+            <textarea id="text_enc" class="form-control" title="Text" rows="2" cols="50"></textarea>
         </div>
         <div class="form-group">
-            <label class="alert-danger" for="priv_key">Private key, save it!</label>
-            <input type="text" class="form-control" id="priv_key">
+            <input type="button" class="btn btn-primary" value="Encrypt" id="enc" onclick="encryptText()">
+            <input type="button" class="btn btn-primary" value="Copy" id="copy_enc_btn" onclick="copyEncToClipboard()">
         </div>
         <div class="form-group">
-            <input type="button" class="btn btn-primary" value="Publish" id="enc" onclick="publishKey()">
-            <input type="button" class="btn btn-primary" value="Copy" id="enc" onclick="copyPrivateKey()">
+            <label for="copy_enc">Encrypted</label>
+            <textarea id="copy_enc" class="form-control" title="Encrypted" rows="2" cols="50"></textarea><br>
         </div>
     </div>
 </div>

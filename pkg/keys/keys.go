@@ -18,7 +18,7 @@ var (
 	info = []byte("pspk_info")
 )
 
-func GenereateDH() (*[32]byte, *[32]byte, error) {
+func GenerateDH() (*[32]byte, *[32]byte, error) {
 	random := rand.Reader
 
 	// Create a byte array for our public and private keys.
