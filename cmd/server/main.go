@@ -26,7 +26,8 @@ func init() {
 
 	flag.Parse()
 	if *addrFlag == "" {
-		panic("invalid addr")
+		fmt.Println(output, "invalid flag '-addr', please enter addr like ':8080'")
+		os.Exit(1)
 	}
 }
 
@@ -40,9 +41,8 @@ func main() {
 
 	errs := make(chan error)
 
-	if err := http.ListenAndServe(*addrFlag, nil); err != nil {
-		os.Exit(1)
-	}
+	errs <- http.ListenAndServe(*addrFlag, nil)
+
 	err := <-errs
 	if err != nil {
 		fmt.Fprintln(output, err.Error())
