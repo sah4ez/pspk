@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/pkg/errors"
 	"github.com/sah4ez/pspk/handler"
 )
 
@@ -41,7 +42,11 @@ func main() {
 
 	errs := make(chan error)
 
-	errs <- http.ListenAndServe(*addrFlag, nil)
+	go func() {
+		fmt.Fprintln(output, "started server on", *addrFlag)
+		err := http.ListenAndServe(*addrFlag, nil)
+		errs <- errors.Wrap(err, "Failed listening server")
+	}()
 
 	err := <-errs
 	if err != nil {
