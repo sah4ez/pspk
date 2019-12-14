@@ -18,6 +18,8 @@ github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINE
 github.com/rs/dnscache v0.0.0-20190225195841-509b4d5d3b47 h1:bb7BZaZmfCYwAX8DJzI6dbU5YxeeLbEcLTlurQCOdaw=
 github.com/rs/dnscache v0.0.0-20190225195841-509b4d5d3b47/go.mod h1:wCgl1r/tBYuvT7s3NuSZp0lbfFytPsThN7LH4Us8NHE=
 github.com/sah4ez/pspk v0.0.0-20190319201528-f8638c8d9b34 h1:4P0XJ9x4G4vuQ7MRml/8J4maMhwxV6yqek1nT1m+cxw=
+github.com/skip2/go-qrcode v0.0.0-20191027152451-9434209cb086 h1:RYiqpb2ii2Z6J4x0wxK46kvPBbFuZcdhS+CIztmYgZs=
+github.com/skip2/go-qrcode v0.0.0-20191027152451-9434209cb086/go.mod h1:PLPIyL7ikehBD1OAjmKKiOEhbvWyHGaNDjquXMcYABo=
 github.com/urfave/cli v1.20.0 h1:fDqGv3UG/4jbVl/QkFwEdddtEDjh/5Ov6X+0B/3bPaw=
 github.com/urfave/cli v1.20.0/go.mod h1:70zkFmudgCuE/ngEzBv17Jvp/497gISqfk5gWijbERA=
 github.com/vitessio/vitess v2.1.1+incompatible h1:y1LxnZQ8QKfS/hbkNUDHtKE0Mmrg0WbxT2lTjtmj6/w=
