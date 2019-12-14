@@ -74,6 +74,8 @@ response:
 ```
 [{"id":"5c9bd58b149588f7c71bce91","name":"alice","key":"E7+TL112lj1GmJRHf9jT5MZJDgYIhUbtBLc4/ZFMZ5c="}]
 ```
+- get public key in QR code by name `GET /?qr_code=alice`. Response will contains byes for `image/png`.
+
 - get by regexp `name.*` `GET /?name_regex=Some` response
 ```
 [{"id":"5c9bd58b149588f7c71bce91","name":"Some.Name","key":"E7+TL112lj1GmJRHf9jT5MZJDgYIhUbtBLc4/ZFMZ5c="},...]
