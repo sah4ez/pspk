@@ -209,8 +209,8 @@ function derivationCatch(e) {
 	console.error("hmmm... derived failed:", e.message)
 }
 
-function encrypt(json, text) {
-	const pub = _base64ToUint8Array(json.key);
+function encrypt(key, text) {
+	const pub = _base64ToUint8Array(key);
 
 	const shared = axlsign.sharedKey(keyPair.private, pub);
 	// just for debug
@@ -248,7 +248,7 @@ function encryptText() {
 	xhr.open("POST", url, true);
 	xhr.onreadystatechange = function () {
 		if (xhr.readyState === 4 && xhr.status === 200) {
-			encrypt(JSON.parse(xhr.responseText), text)
+			encrypt(JSON.parse(xhr.responseText).key, text)
 		}
 	};
 
@@ -365,4 +365,36 @@ function publishKey() {
 
 	const data = JSON.stringify({"name": name, "key": pub});
 	xhr.send(data);
+}
+
+function scanPubKey(){
+	const fileSelector = document.getElementById('file-selector');
+	const text = window.document.getElementById("text_enc").value;
+
+	const file = fileSelector.files[0];
+	if (!file) {
+		return;
+	}
+
+	var reader  = new FileReader();
+	reader.addEventListener("load", function () {
+		qrcode.callback = function(key) {
+			if (key === 'error decoding QR Code') {
+				const del = document.getElementById('dec_alert');
+				if (del !== null) {
+					document.body.removeChild(del);
+				}
+				const ele = document.createElement('div');
+				ele.id = 'dec_alert'
+				ele.textContent = key;
+				ele.className = 'alert alert-warning';
+				ele.setAttribute('role', 'alert');
+				document.body.appendChild(ele);
+			}
+			console.log(key, text)
+			encrypt(key, text)
+		};
+		qrcode.decode(reader.result);
+	}, false);
+	reader.readAsDataURL(file);
 }
