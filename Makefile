@@ -24,4 +24,4 @@ clean:
 	rm -rf _build
 
 release_web:
-	scp ./web/*  ${FREECONTENT_SPACE}:/var/www/pspk/
+	scp -r ./web/*  ${FREECONTENT_SPACE}:/var/www/pspk/

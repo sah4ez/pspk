@@ -20,8 +20,8 @@ This service solve problem for persistent saving public key and send to recipien
 - [ ] support other elliptic curve cryptography algorithms
 - [ ] ephemeral encryption via API method (generate ephemeral private key on server, ecnrypt by public key and return link to data)
 - [ ] verification of signature by link
-- [ ] QR codes
-- [ ] simple cli tool
+- [x] QR codes
+- [ ] simple cli tool (WIP)
 - [x] simple web-application. See: https://freecontent.space
 - [ ] simple iOS client
 - [ ] simple android client
