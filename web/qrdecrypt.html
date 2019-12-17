@@ -34,13 +34,13 @@
 		<a class="nav-link active" href="./encrypt.html">Encrypt</a>
 	</li>
 	<li class="nav-item">
-		<a class="nav-link active" href="#">QR Encrypt</a>
+		<a class="nav-link active" href="./qrencrypt.html">QR Encrypt</a>
 	</li>
 	<li class="nav-item">
 		<a class="nav-link" href="./decrypt.html">Decrypt</a>
 	</li>
 	<li class="nav-item">
-		<a class="nav-link active" href="./qrdecrypt.html">QR Decrypt</a>
+		<a class="nav-link active" href="#">QR Decrypt</a>
 	</li>
 	<li class="nav-item">
 		<a class="nav-link" href="./keys.html">Keys</a>
@@ -48,22 +48,22 @@
 </ul>
 <div class="container d-flex justify-content-center">
     <div class="col">
-        <h3 class="d-flex justify-content-center">Encrypt it!</h3>
+        <h3 class="d-flex justify-content-center">Decrypt it!</h3>
         <div class="form-group">
-            <label for="file-selector">QR of public key:</label>
+            <label for="file-selector">QR of private key:</label>
 			<input type="file" id="file-selector">
         </div>
         <div class="form-group">
-            <label for="text_enc">Text</label>
-            <textarea id="text_enc" class="form-control" title="Text" rows="2" cols="50"></textarea>
+            <label for="text_dec">Base64</label>
+            <textarea id="text_dec" class="form-control" title="Text" rows="2" cols="50"></textarea>
         </div>
         <div class="form-group">
-            <input type="button" class="btn btn-primary" value="Encrypt" id="enc" onclick="scanPubKey()">
-            <input type="button" class="btn btn-primary" value="Copy" id="copy_enc_btn" onclick="copyEncToClipboard()">
+            <input type="button" class="btn btn-primary" value="Decrypt" id="enc" onclick="scanPrivKey()">
+            <input type="button" class="btn btn-primary" value="Copy" id="copy_enc_btn" onclick="copyDecToClipboard()">
         </div>
         <div class="form-group">
-            <label for="copy_enc">Encrypted</label>
-            <textarea id="copy_enc" class="form-control" title="Encrypted" rows="2" cols="50"></textarea><br>
+            <label for="copy_dec">Decrypted</label>
+            <textarea id="copy_dec" class="form-control" title="Decrypted" rows="2" cols="50"></textarea><br>
         </div>
     </div>
 </div>
