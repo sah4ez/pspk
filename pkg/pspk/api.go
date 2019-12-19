@@ -9,11 +9,19 @@ import (
 	"net/url"
 
 	"github.com/google/go-querystring/query"
-	"github.com/sah4ez/pspk/handler"
 	"github.com/sah4ez/pspk/pkg/validation"
 )
 
-const UserAgent = "pspk-client/1.0.0"
+const (
+	UserAgent     = "pspk-client/1.0.0"
+	NameKey       = "name_key"
+	NameSearchKey = "name_regex"
+	LinkKey       = "link"
+	OutputKey     = "output"
+	LastIDKEy     = "last_key"
+	LimitKey      = "limit"
+	QRCodeKey     = "qr_code"
+)
 
 type Key struct {
 	ID   string `json:"id"`
@@ -96,7 +104,7 @@ func (p *pspk) GenerateLink(d string) (string, error) {
 		Method string `json:"method"`
 		Data   string `json:"data"`
 	}{
-		Method: handler.LinkKey,
+		Method: LinkKey,
 		Data:   d,
 	}
 	req, err := p.newRequest("POST", body, nil)

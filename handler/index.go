@@ -21,6 +21,7 @@ import (
 
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
+	"github.com/sah4ez/pspk/pkg/pspk"
 	"github.com/sah4ez/pspk/pkg/validation"
 	qrcode "github.com/skip2/go-qrcode"
 )
@@ -28,14 +29,6 @@ import (
 type pub []byte
 
 const (
-	NameKey       = "name_key"
-	NameSearchKey = "name_regex"
-	LinkKey       = "link"
-	OutputKey     = "output"
-	LastIDKEy     = "last_key"
-	LimitKey      = "limit"
-	QRCodeKey     = "qr_code"
-
 	maxLimit = 500
 )
 
@@ -101,37 +94,41 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodGet {
 		query := r.URL.Query()
-		if query.Get(LinkKey) != "" {
+		if query.Get(pspk.LinkKey) != "" {
 			if err := GetByLink(w, r); err != nil {
 				resp["error"] = err.Error()
-				json.NewEncoder(w).Encode(resp)
+				//todo: fixed handled error
+				_ = json.NewEncoder(w).Encode(resp)
 			}
 			return
 		}
-		switch query.Get(OutputKey) {
+		switch query.Get(pspk.OutputKey) {
 		case "json", "json-map":
 			w.Header().Set("Content-Type", "application/json")
 			if err := GetKeysInJson(w, r); err != nil {
 				resp["error"] = err.Error()
-				json.NewEncoder(w).Encode(resp)
+				//todo: fixed handled error
+				_ = json.NewEncoder(w).Encode(resp)
 			}
 			return
 		case "json-array":
 			w.Header().Set("Content-Type", "application/json")
 			if err := GetKeysInJsonArray(w, r); err != nil {
 				resp["error"] = err.Error()
-				json.NewEncoder(w).Encode(resp)
+				//todo: fixed handled error
+				_ = json.NewEncoder(w).Encode(resp)
 			}
 			return
 		}
 
-		if name := query.Get(QRCodeKey); name != "" {
+		if name := query.Get(pspk.QRCodeKey); name != "" {
 			var key Request
 			key, err = ByName(name)
 			if err != nil {
 				w.Header().Set("Content-Type", "application/json")
 				resp["error"] = err.Error()
-				json.NewEncoder(w).Encode(resp)
+				//todo: fixed handled error
+				_ = json.NewEncoder(w).Encode(resp)
 				return
 			}
 
@@ -140,56 +137,59 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				w.Header().Set("Content-Type", "application/json")
 				resp["error"] = err.Error()
-				json.NewEncoder(w).Encode(resp)
+				//todo: fixed handled error
+				_ = json.NewEncoder(w).Encode(resp)
 				return
 			}
 
 			w.Header().Set("Content-Type", "image/png")
 			if _, err := io.Copy(w, bytes.NewReader(png)); err != nil {
 				resp["error"] = err.Error()
-				json.NewEncoder(w).Encode(resp)
+				//todo: fixed handled error
+				_ = json.NewEncoder(w).Encode(resp)
 				return
 			}
 			return
 		}
-
-		if name := query.Get(NameKey); name != "" {
+		if name := query.Get(pspk.NameKey); name != "" {
 			w.Header().Set("Content-Type", "application/json")
 			var key Request
 			key, err = ByName(name)
 			if err != nil {
 				resp["error"] = err.Error()
-				json.NewEncoder(w).Encode(resp)
+				//todo: fixed handled error
+				_ = json.NewEncoder(w).Encode(resp)
 				return
 			}
-
 			if err = json.NewEncoder(w).Encode([]Request{key}); err != nil {
 				resp["error"] = err.Error()
-				json.NewEncoder(w).Encode(resp)
+				//todo: fixed handled error
+				_ = json.NewEncoder(w).Encode(resp)
 				return
 			}
 			return
 		}
-		if name := query.Get(NameSearchKey); name != "" {
+		if name := query.Get(pspk.NameSearchKey); name != "" {
 			w.Header().Set("Content-Type", "application/json")
 			keys, err := FindByName(name)
 			if err != nil {
 				resp["error"] = err.Error()
-				json.NewEncoder(w).Encode(resp)
+				//todo: fixed handled error
+				_ = json.NewEncoder(w).Encode(resp)
 				return
 			}
-
 			if err = json.NewEncoder(w).Encode(keys); err != nil {
 				resp["error"] = err.Error()
-				json.NewEncoder(w).Encode(resp)
+				//todo: fixed handled error
+				_ = json.NewEncoder(w).Encode(resp)
 				return
 			}
-
 			return
 		}
 		if err := Get(w, r); err != nil {
 			resp["error"] = err.Error()
-			json.NewEncoder(w).Encode(resp)
+			//todo: fixed handled error
+			_ = json.NewEncoder(w).Encode(resp)
 			return
 		}
 	}
@@ -199,7 +199,8 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			resp["error"] = err.Error()
 		}
-		json.NewEncoder(w).Encode(resp)
+		//todo: fixed handled error
+		_ = json.NewEncoder(w).Encode(resp)
 	}()
 
 	if r.Method == http.MethodPost {
@@ -211,14 +212,14 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		switch strings.ToLower(keyRequest.Method) {
-		case LinkKey:
+		case pspk.LinkKey:
 			if keyRequest.Data == "" {
 				err = fmt.Errorf("empty data")
 				w.WriteHeader(http.StatusBadRequest)
 				return
 			}
 			if len(keyRequest.Data) > 2048 {
-				err = fmt.Errorf("Very large data, max 2048 symbols")
+				err = fmt.Errorf("very large data, max 2048 symbols")
 				w.WriteHeader(http.StatusBadRequest)
 				return
 			}
@@ -351,7 +352,7 @@ func Load(lastID bson.ObjectId, limit int) (keys map[string]pub, err error) {
 
 	c := sess.DB("pspk").C("keys")
 
-	result := []Request{}
+	result := make([]Request, 0, 64)
 
 	query := bson.M{}
 	if lastID != "" {
@@ -421,7 +422,8 @@ func initConnection(w io.Writer, resp map[string]interface{}) {
 		resp["error"] = err.Error()
 		resp["cause"] = "parse"
 		resp["url"] = addr
-		json.NewEncoder(w).Encode(resp)
+		//todo: fixed handled error
+		_ = json.NewEncoder(w).Encode(resp)
 		return
 	}
 	dialInfo.Timeout = 5 * time.Second
@@ -451,10 +453,11 @@ func initConnection(w io.Writer, resp map[string]interface{}) {
 		conn, err := tls.Dial("tcp", addr.String(), tlsConfig)
 
 		if err != nil {
-			fmt.Fprint(output, err.Error())
+			_, _ = fmt.Fprint(output, err.Error())
 			resp["error"] = err.Error()
 			resp["cause"] = "dial func"
-			json.NewEncoder(w).Encode(resp)
+			//todo: fixed handled error
+			_ = json.NewEncoder(w).Encode(resp)
 		}
 		return conn, err
 	}
@@ -463,7 +466,8 @@ func initConnection(w io.Writer, resp map[string]interface{}) {
 	if err != nil {
 		resp["error"] = err.Error()
 		resp["cause"] = "dial"
-		json.NewEncoder(w).Encode(resp)
+		//todo: fixed handled error
+		_ = json.NewEncoder(w).Encode(resp)
 		return
 	}
 
@@ -472,7 +476,8 @@ func initConnection(w io.Writer, resp map[string]interface{}) {
 	if err != nil {
 		resp["error"] = err.Error()
 		resp["cause"] = "create index"
-		json.NewEncoder(w).Encode(resp)
+		//todo: fixed handled error
+		_ = json.NewEncoder(w).Encode(resp)
 		return
 	}
 	c = session.DB("pspk").C("links")
@@ -480,13 +485,14 @@ func initConnection(w io.Writer, resp map[string]interface{}) {
 	if err != nil {
 		resp["error"] = err.Error()
 		resp["cause"] = "create index"
-		json.NewEncoder(w).Encode(resp)
+		//todo: fixed handled error
+		_ = json.NewEncoder(w).Encode(resp)
 		return
 	}
 }
 func GetByLink(w io.Writer, r *http.Request) (err error) {
 	query := r.URL.Query()
-	id := query.Get(LinkKey)
+	id := query.Get(pspk.LinkKey)
 	data, err := FindByLinkId(id)
 	if err != nil {
 		return err
@@ -499,10 +505,10 @@ func GetByLink(w io.Writer, r *http.Request) (err error) {
 func loadPagination(r *http.Request) (id bson.ObjectId, limit int) {
 	query := r.URL.Query()
 
-	id = bson.ObjectIdHex(query.Get(LastIDKEy))
-	limit_str := query.Get(LimitKey)
+	id = bson.ObjectIdHex(query.Get(pspk.LastIDKEy))
+	limitStr := query.Get(pspk.LimitKey)
 
-	limit, err := strconv.Atoi(limit_str)
+	limit, err := strconv.Atoi(limitStr)
 	if err != nil {
 		limit = maxLimit
 	}
@@ -535,7 +541,7 @@ func GetKeysInJsonArray(w io.Writer, r *http.Request) (err error) {
 	return
 }
 
-func Get(w io.Writer, r *http.Request) (err error) {
+func Get(w io.Writer, _ *http.Request) (err error) {
 	tmpl, err := template.New("index").Funcs(template.FuncMap{
 		"base64": func(b []byte) string {
 			return base64.StdEncoding.EncodeToString(b)
@@ -551,7 +557,6 @@ func Get(w io.Writer, r *http.Request) (err error) {
 	if err != nil {
 		return fmt.Errorf("load all key: %s", err.Error())
 	}
-
 	err = tmpl.Execute(w, PspkStore{
 		Title: "PSPK kv store",
 		Keys:  keys,
