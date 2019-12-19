@@ -11,6 +11,7 @@ require (
 	github.com/miekg/dns v1.1.6 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/rs/dnscache v0.0.0-20190225195841-509b4d5d3b47 // indirect
+	github.com/skip2/go-qrcode v0.0.0-20191027152451-9434209cb086
 	github.com/urfave/cli v1.20.0
 	golang.org/x/crypto v0.0.0-20190313024323-a1f597ede03a
 	golang.org/x/net v0.0.0-20190313220215-9f648a60d977 // indirect

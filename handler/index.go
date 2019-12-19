@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"bytes"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
@@ -22,11 +23,14 @@ import (
 	"github.com/globalsign/mgo/bson"
 	"github.com/sah4ez/pspk/pkg/pspk"
 	"github.com/sah4ez/pspk/pkg/validation"
+	qrcode "github.com/skip2/go-qrcode"
 )
 
 type pub []byte
 
 const (
+	QRCodeKey     = "qr_code"
+
 	maxLimit = 500
 )
 
@@ -118,7 +122,36 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			}
 			return
 		}
-		if name := query.Get(pspk.NameKey); name != "" {
+
+		if name := query.Get(QRCodeKey); name != "" {
+			var key Request
+			key, err = ByName(name)
+			if err != nil {
+				w.Header().Set("Content-Type", "application/json")
+				resp["error"] = err.Error()
+				json.NewEncoder(w).Encode(resp)
+				return
+			}
+
+			var png []byte
+			png, err := qrcode.Encode(key.Key, qrcode.Highest, 256)
+			if err != nil {
+				w.Header().Set("Content-Type", "application/json")
+				resp["error"] = err.Error()
+				json.NewEncoder(w).Encode(resp)
+				return
+			}
+
+			w.Header().Set("Content-Type", "image/png")
+			if _, err := io.Copy(w, bytes.NewReader(png)); err != nil {
+				resp["error"] = err.Error()
+				json.NewEncoder(w).Encode(resp)
+				return
+			}
+			return
+		}
+
+		if name := query.Get(NameKey); name != "" {
 			w.Header().Set("Content-Type", "application/json")
 			var key Request
 			key, err = ByName(name)
@@ -403,18 +436,19 @@ func initConnection(w io.Writer, resp map[string]interface{}) {
 		if local != nil && *local {
 			cer, err := tls.LoadX509KeyPair("test_certs/localhost.crt", "test_certs/localhost.key")
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("load key pair failed: %w", err)
 			}
 			// Load CA cert
 			caCert, err := ioutil.ReadFile("test_certs/rootCA.crt")
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("read root ca failed: %w", err)
 			}
 			caCertPool := x509.NewCertPool()
 			caCertPool.AppendCertsFromPEM(caCert)
 
 			tlsConfig.Certificates = []tls.Certificate{cer}
 			tlsConfig.RootCAs = caCertPool
+			tlsConfig.ServerName = "localhost"
 			tlsConfig.BuildNameToCertificate()
 		}
 

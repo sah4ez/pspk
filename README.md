@@ -20,8 +20,8 @@ This service solve problem for persistent saving public key and send to recipien
 - [ ] support other elliptic curve cryptography algorithms
 - [ ] ephemeral encryption via API method (generate ephemeral private key on server, ecnrypt by public key and return link to data)
 - [ ] verification of signature by link
-- [ ] QR codes
-- [ ] simple cli tool
+- [x] QR codes
+- [ ] simple cli tool (WIP)
 - [x] simple web-application. See: https://freecontent.space
 - [ ] simple iOS client
 - [ ] simple android client
@@ -74,6 +74,8 @@ response:
 ```
 [{"id":"5c9bd58b149588f7c71bce91","name":"alice","key":"E7+TL112lj1GmJRHf9jT5MZJDgYIhUbtBLc4/ZFMZ5c="}]
 ```
+- get public key in QR code by name `GET /?qr_code=alice`. Response will contains byes for `image/png`.
+
 - get by regexp `name.*` `GET /?name_regex=Some` response
 ```
 [{"id":"5c9bd58b149588f7c71bce91","name":"Some.Name","key":"E7+TL112lj1GmJRHf9jT5MZJDgYIhUbtBLc4/ZFMZ5c="},...]
