@@ -6,6 +6,7 @@ require (
 	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412
 	github.com/bogdanovich/dns_resolver v0.0.0-20170211073258-a8e42bc6a5b6 // indirect
 	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8
+	github.com/google/go-querystring v1.0.0
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/miekg/dns v1.1.6 // indirect
 	github.com/pkg/errors v0.8.1
