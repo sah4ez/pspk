@@ -1,9 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-
+	<meta charset="utf-8">
+    <title>Decrypt it!</title>
 	<script type="text/javascript" src="./qrcode/grid.js"></script>
 	<script type="text/javascript" src="./qrcode/version.js"></script>
 	<script type="text/javascript" src="./qrcode/detector.js"></script>
@@ -21,20 +20,15 @@
 	<script type="text/javascript" src="./qrcode/findpat.js"></script>
 	<script type="text/javascript" src="./qrcode/alignpat.js"></script>
 	<script type="text/javascript" src="./qrcode/databr.js"></script>
-
-    <script src="./qrious.min.js"></script>
-
-    <title>About!</title>
     <script src="./axlsign.js"></script>
     <script src="./encryp.js"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
           integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 </head>
 <body>
-
 <ul class="nav">
 	<li class="nav-item">
-		<a class="nav-link active" href="#">About</a>
+		<a class="nav-link active" href="./index.html">About</a>
 	</li>
 	<li class="nav-item">
 		<a class="nav-link active" href="./encrypt.html">Encrypt</a>
@@ -46,7 +40,7 @@
 		<a class="nav-link" href="./decrypt.html">Decrypt</a>
 	</li>
 	<li class="nav-item">
-		<a class="nav-link active" href="./qrdecrypt.html">QR Decrypt</a>
+		<a class="nav-link active" href="#">QR Decrypt</a>
 	</li>
 	<li class="nav-item">
 		<a class="nav-link" href="./keys.html">Keys</a>
@@ -54,42 +48,24 @@
 </ul>
 <div class="container d-flex justify-content-center">
     <div class="col">
-        <h3 class="d-flex justify-content-center">About</h3>
+        <h3 class="d-flex justify-content-center">Decrypt it!</h3>
         <div class="form-group">
-			Application for encryption/decryption, sign/verify any digital information.
-			Also free storage for your public parts of ECDH x25519 keys.
+            <label for="file-selector">QR of private key:</label>
+			<input type="file" id="file-selector">
         </div>
         <div class="form-group">
-            <label for="pub_name">Your Public name</label>
-            <input type="text" class="form-control" id="pub_name" aria-label="Name Public Key recipient">
+            <label for="text_dec">Base64</label>
+            <textarea id="text_dec" class="form-control" title="Text" rows="2" cols="50"></textarea>
         </div>
         <div class="form-group">
-            <label for="pub_key">Public key</label>
-            <input type="text" class="form-control" id="pub_key">
+            <input type="button" class="btn btn-primary" value="Decrypt" id="enc" onclick="scanPrivKey()">
+            <input type="button" class="btn btn-primary" value="Copy" id="copy_enc_btn" onclick="copyDecToClipboard()">
         </div>
         <div class="form-group">
-            <label class="alert-danger" for="priv_key">Private key, save it!</label>
-            <input type="text" class="form-control" id="priv_key">
-        </div>
-		<div class="form-group custom-control custom-switch">
-		  <input type="checkbox" class="custom-control-input" id="qr_codes" checked>
-		  <label class="custom-control-label" for="qr_codes">Generate QR Codes</label>
-		</div>
-        <div class="form-group">
-            <input type="button" class="btn btn-primary" value="Publish" id="enc" onclick="publishKey()">
-            <input type="button" class="btn btn-primary" value="Copy" id="enc" onclick="copyPrivateKey()">
-			<input type="button" class="btn btn-primary" value="Download" id="qr_dowload" onclick="downloadQRCodes()">
-        </div>
-		<label class="alert-danger" for="qr_priv">QR Private key, save it!</label>
-        <div class="form-group">
-		    <canvas id="qr_priv" onclick="downloadQRCode('qr_priv')"></canvas>
-        </div>
-		<label for="qr_pub">QR Public kye</label>
-        <div class="form-group">
-		    <canvas id="qr_pub" onclick="downloadQRCode('qr_pub')"></canvas>
+            <label for="copy_dec">Decrypted</label>
+            <textarea id="copy_dec" class="form-control" title="Decrypted" rows="2" cols="50"></textarea><br>
         </div>
     </div>
-
 </div>
 
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"

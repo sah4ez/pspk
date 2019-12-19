@@ -209,8 +209,8 @@ function derivationCatch(e) {
 	console.error("hmmm... derived failed:", e.message)
 }
 
-function encrypt(json, text) {
-	const pub = _base64ToUint8Array(json.key);
+function encrypt(key, text) {
+	const pub = _base64ToUint8Array(key);
 
 	const shared = axlsign.sharedKey(keyPair.private, pub);
 	// just for debug
@@ -248,7 +248,7 @@ function encryptText() {
 	xhr.open("POST", url, true);
 	xhr.onreadystatechange = function () {
 		if (xhr.readyState === 4 && xhr.status === 200) {
-			encrypt(JSON.parse(xhr.responseText), text)
+			encrypt(JSON.parse(xhr.responseText).key, text)
 		}
 	};
 
@@ -266,6 +266,7 @@ function decryptText() {
 	const data = messageBytes.slice(32);
 
 	const privKey = _base64ToUint8Array(keyBase64);
+	//console.log("msg", data, "key", keyBase64, "pub", pubKey);
 
 	decrypt(privKey, pubKey, data);
 }
@@ -324,6 +325,27 @@ function copyPrivateKey() {
 	document.body.appendChild(ele);
 }
 
+function downloadQRCodes() {
+	downloadQRCode("qr_priv");
+	downloadQRCode("qr_pub");
+}
+
+function downloadQRCode(key) {
+	const name = window.document.getElementById("pub_name").value;
+	const contentType = "image/png";
+	const key_name = name+'_'+key+'_base64.png';
+	const priv = document.getElementById(key);
+	const img_key = priv.toDataURL(contentType);
+
+    var a = document.createElement("a");
+    a.href = img_key;
+    a.download = key_name;
+
+	document.body.appendChild(a);
+	a.click();
+	document.body.removeChild(a);
+}
+
 function publishKey() {
 	// Init elements of UI
 	const name = window.document.getElementById("pub_name").value;
@@ -361,8 +383,95 @@ function publishKey() {
 			alertEle.setAttribute('role', 'alert');
 			document.body.appendChild(alertEle);
 		}
+		const generateQRCode = document.getElementById("qr_codes");
+		if (generateQRCode.checked) {
+			var qr = new QRious({
+			  element: document.getElementById('qr_priv'),
+			  value: key,
+			  size: 256	
+			});
+			var qr = new QRious({
+			  element: document.getElementById('qr_pub'),
+			  value: pub,
+			  size: 256
+			});
+		}
 	};
 
 	const data = JSON.stringify({"name": name, "key": pub});
 	xhr.send(data);
+}
+
+function scanPubKey(){
+	const fileSelector = document.getElementById('file-selector');
+	const text = window.document.getElementById("text_enc").value;
+
+	const file = fileSelector.files[0];
+	if (!file) {
+		return;
+	}
+
+	var reader  = new FileReader();
+	reader.addEventListener("load", function () {
+		qrcode.callback = function(key) {
+			if (key === 'error decoding QR Code') {
+				const del = document.getElementById('dec_alert');
+				if (del !== null) {
+					document.body.removeChild(del);
+				}
+				const ele = document.createElement('div');
+				ele.id = 'dec_alert'
+				ele.textContent = key;
+				ele.className = 'alert alert-warning';
+				ele.setAttribute('role', 'alert');
+				document.body.appendChild(ele);
+				return
+			}
+			//console.log(key, text)
+			encrypt(key, text)
+		};
+		qrcode.decode(reader.result);
+	}, false);
+	reader.readAsDataURL(file);
+}
+
+function scanPrivKey(){
+	const fileSelector = document.getElementById('file-selector');
+	const textBase64 = window.document.getElementById("text_dec").value;
+
+	const file = fileSelector.files[0];
+	if (!file) {
+		return;
+	}
+
+	var reader  = new FileReader();
+	reader.addEventListener("load", function () {
+		qrcode.callback = function(key) {
+			if (key === 'error decoding QR Code') {
+				const del = document.getElementById('dec_alert');
+				if (del !== null) {
+					document.body.removeChild(del);
+				}
+				const ele = document.createElement('div');
+				ele.id = 'dec_alert'
+				ele.textContent = key;
+				ele.className = 'alert alert-warning';
+				ele.setAttribute('role', 'alert');
+				document.body.appendChild(ele);
+				return
+			}
+
+			const keyBase64 = key;
+			const messageBytes = _base64ToUint8Array(textBase64);
+			const pubKey = messageBytes.slice(0, 32);
+			const data = messageBytes.slice(32);
+
+			const privKey = _base64ToUint8Array(keyBase64);
+			//console.log("msg", data, "key", keyBase64, "pub", pubKey);
+
+			decrypt(privKey, pubKey, data);
+		};
+		qrcode.decode(reader.result);
+	}, false);
+	reader.readAsDataURL(file);
 }
