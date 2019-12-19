@@ -20,6 +20,7 @@ const (
 	OutputKey     = "output"
 	LastIDKEy     = "last_key"
 	LimitKey      = "limit"
+	QRCodeKey     = "qr_code"
 )
 
 type Key struct {

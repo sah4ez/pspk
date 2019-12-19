@@ -29,8 +29,6 @@ import (
 type pub []byte
 
 const (
-	QRCodeKey     = "qr_code"
-
 	maxLimit = 500
 )
 
@@ -123,13 +121,14 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if name := query.Get(QRCodeKey); name != "" {
+		if name := query.Get(pspk.QRCodeKey); name != "" {
 			var key Request
 			key, err = ByName(name)
 			if err != nil {
 				w.Header().Set("Content-Type", "application/json")
 				resp["error"] = err.Error()
-				json.NewEncoder(w).Encode(resp)
+				//todo: fixed handled error
+				_ = json.NewEncoder(w).Encode(resp)
 				return
 			}
 
@@ -138,20 +137,21 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				w.Header().Set("Content-Type", "application/json")
 				resp["error"] = err.Error()
-				json.NewEncoder(w).Encode(resp)
+				//todo: fixed handled error
+				_ = json.NewEncoder(w).Encode(resp)
 				return
 			}
 
 			w.Header().Set("Content-Type", "image/png")
 			if _, err := io.Copy(w, bytes.NewReader(png)); err != nil {
 				resp["error"] = err.Error()
-				json.NewEncoder(w).Encode(resp)
+				//todo: fixed handled error
+				_ = json.NewEncoder(w).Encode(resp)
 				return
 			}
 			return
 		}
-
-		if name := query.Get(NameKey); name != "" {
+		if name := query.Get(pspk.NameKey); name != "" {
 			w.Header().Set("Content-Type", "application/json")
 			var key Request
 			key, err = ByName(name)
@@ -178,14 +178,12 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 				_ = json.NewEncoder(w).Encode(resp)
 				return
 			}
-
 			if err = json.NewEncoder(w).Encode(keys); err != nil {
 				resp["error"] = err.Error()
 				//todo: fixed handled error
 				_ = json.NewEncoder(w).Encode(resp)
 				return
 			}
-
 			return
 		}
 		if err := Get(w, r); err != nil {
