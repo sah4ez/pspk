@@ -3,3 +3,8 @@ cmd
 pkg
 vendor
 _build
+web
+webasm
+test
+test_certs
+e2e
