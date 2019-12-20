@@ -43,7 +43,7 @@ func init() {
 
 	path = environment.LoadDataPath()
 	api = pspk.New(baseURL)
-	pcli = pspk.NewPSPKcli(api, cfg, path)
+	pcli = pspk.NewPSPKcli(api, cfg, path, baseURL, out)
 
 	app = cli.NewApp()
 	app.Name = "pspk"
