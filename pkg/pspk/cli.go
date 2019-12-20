@@ -22,6 +22,8 @@ type CLI interface {
 	EphemeralEncrypt(message, pubName string, link bool) (err error)
 	EncryptGroup(name, message, groupName string, link bool) (err error)
 	EphemeralEncrypGroup(name, message, groupName string, link bool) (err error)
+
+	Secret(name, pubName string) (err error)
 }
 
 type PSPKcli struct {
@@ -272,7 +274,30 @@ func (p *PSPKcli) EphemeralEncrypGroup(name, message, groupName string, link boo
 	data := base64.StdEncoding.EncodeToString(m)
 	fmt.Fprintln(p.out, data)
 	return p.generateLink(link, data)
+}
 
+func (p *PSPKcli) Secret(name, pubName string) (err error) {
+	path, err := p.loadPath(name)
+	if err != nil {
+		return fmt.Errorf("load path to keys: %w", err)
+	}
+
+	priv, err := utils.Read(path, "key.bin")
+	if err != nil {
+		return err
+	}
+	pub, err := p.api.Load(pubName)
+	if err != nil {
+		return err
+	}
+	dh := keys.Secret(priv, pub)
+	fmt.Fprintln(p.out, base64.StdEncoding.EncodeToString(dh))
+
+	err = utils.Write(path, pubName+".secret.bin", dh[:])
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (p *PSPKcli) loadPath(name string) (path string, err error) {
