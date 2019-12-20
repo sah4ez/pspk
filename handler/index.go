@@ -505,7 +505,9 @@ func GetByLink(w io.Writer, r *http.Request) (err error) {
 func loadPagination(r *http.Request) (id bson.ObjectId, limit int) {
 	query := r.URL.Query()
 
-	id = bson.ObjectIdHex(query.Get(pspk.LastIDKEy))
+	if keyID := query.Get(pspk.LastIDKEy); keyID != "" {
+		id = bson.ObjectIdHex(keyID)
+	}
 	limitStr := query.Get(pspk.LimitKey)
 
 	limit, err := strconv.Atoi(limitStr)
