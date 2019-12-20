@@ -5,18 +5,42 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"net/http"
+	"net/url"
 
-	"github.com/sah4ez/pspk/handler"
+	"github.com/google/go-querystring/query"
 	"github.com/sah4ez/pspk/pkg/validation"
 )
+
+const (
+	UserAgent     = "pspk-client/1.0.0"
+	NameKey       = "name_key"
+	NameSearchKey = "name_regex"
+	LinkKey       = "link"
+	OutputKey     = "output"
+	LastIDKEy     = "last_key"
+	LimitKey      = "limit"
+	QRCodeKey     = "qr_code"
+)
+
+type Key struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	Key  string `json:"key"`
+}
+
+type GetAllOptions struct {
+	Output  string `url:"output,omitempty"`
+	LastKey string `url:"last_key,omitempty"`
+	Limit   int    `url:"limit,omitempty"`
+}
 
 type PSPK interface {
 	Publish(name string, key []byte) error
 	Load(name string) ([]byte, error)
 	GenerateLink(string) (string, error)
 	DownloadByLink(string) (string, error)
+	GetAll(opts GetAllOptions) ([]Key, error)
 }
 
 type pspk struct {
@@ -42,21 +66,11 @@ func (p *pspk) Publish(name string, key []byte) error {
 		Name: name,
 		Key:  base64.StdEncoding.EncodeToString(key),
 	}
-
-	b, err := json.Marshal(&body)
+	req, err := p.newRequest("POST", body, nil)
 	if err != nil {
 		return err
 	}
-
-	req, err := http.NewRequest("POST", p.basePath, bytes.NewBuffer(b))
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := p.client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	return nil
+	return p.doRequest(req, nil)
 }
 
 func (p *pspk) Load(name string) ([]byte, error) {
@@ -68,79 +82,47 @@ func (p *pspk) Load(name string) ([]byte, error) {
 	}{
 		Name: name,
 	}
-
-	b, err := json.Marshal(&body)
+	req, err := p.newRequest("POST", body, nil)
 	if err != nil {
 		return nil, err
 	}
-
-	req, err := http.NewRequest("POST", p.basePath, bytes.NewBuffer(b))
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := p.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	key := &struct {
+	resource := struct {
 		Key string `json:"key"`
 	}{}
-
-	b, err = ioutil.ReadAll(resp.Body)
+	err = p.doRequest(req, &resource)
 	if err != nil {
 		return nil, err
 	}
-
-	err = json.Unmarshal(b, &key)
-	if err != nil {
-		return nil, err
-	}
-
-	return base64.StdEncoding.DecodeString(key.Key)
+	return base64.StdEncoding.DecodeString(resource.Key)
 }
 
 func (p *pspk) GenerateLink(d string) (string, error) {
 	if len(d) == 0 {
 		return "", errors.New("empty data for generation link")
 	}
-	data := struct {
+	body := struct {
 		Method string `json:"method"`
 		Data   string `json:"data"`
 	}{
-		Method: handler.LinkKey,
+		Method: LinkKey,
 		Data:   d,
 	}
-
-	b, err := json.Marshal(&data)
+	req, err := p.newRequest("POST", body, nil)
 	if err != nil {
 		return "", err
 	}
-
-	req, err := http.NewRequest("POST", p.basePath, bytes.NewBuffer(b))
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := p.client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	l := &struct {
+	resource := struct {
 		Link string `json:"link"`
 	}{}
-
-	dec := json.NewDecoder(resp.Body)
-	err = dec.Decode(&l)
+	err = p.doRequest(req, &resource)
 	if err != nil {
 		return "", err
 	}
-	return l.Link, nil
+	return resource.Link, nil
 }
 
 func (p *pspk) DownloadByLink(link string) (string, error) {
 	req, err := http.NewRequest("GET", link, nil)
-
 	resp, err := p.client.Do(req)
 	if err != nil {
 		return "", err
@@ -157,4 +139,77 @@ func (p *pspk) DownloadByLink(link string) (string, error) {
 		return "", err
 	}
 	return b.Data, nil
+}
+
+func (p *pspk) GetAll(options GetAllOptions) ([]Key, error) {
+	req, err := p.newRequest("GET", nil, options)
+	if err != nil {
+		return nil, err
+	}
+	var resource []Key
+	err = p.doRequest(req, &resource)
+	if err != nil {
+		return nil, err
+	}
+	return resource, nil
+}
+
+func (p *pspk) newRequest(method string, body, options interface{}) (*http.Request, error) {
+	u, err := url.Parse(p.basePath)
+	if err != nil {
+		return nil, err
+	}
+	// Custom options
+	if options != nil {
+		optionsQuery, err := query.Values(options)
+		if err != nil {
+			return nil, err
+		}
+		for k, values := range u.Query() {
+			for _, v := range values {
+				optionsQuery.Add(k, v)
+			}
+		}
+		u.RawQuery = optionsQuery.Encode()
+	}
+	var js []byte = nil
+	if body != nil {
+		js, err = json.Marshal(body)
+		if err != nil {
+			return nil, err
+		}
+	}
+	req, err := http.NewRequest(method, u.String(), bytes.NewBuffer(js))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("User-Agent", UserAgent)
+	return req, nil
+}
+
+func (p *pspk) doRequest(req *http.Request, v interface{}) error {
+	resp, err := p.client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	err = checkResponseError(resp)
+	if err != nil {
+		return err
+	}
+	if v != nil {
+		if err := json.NewDecoder(resp.Body).Decode(&v); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func checkResponseError(r *http.Response) error {
+	if r.StatusCode >= 200 && r.StatusCode < 300 {
+		return nil
+	}
+	return errors.New(r.Status)
 }

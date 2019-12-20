@@ -57,7 +57,7 @@ func EphemeralDecrypt() cli.Command {
 				}
 				message = m
 			} else {
-				message = c.Args().Get(1)
+				message = c.Args().Get(0)
 			}
 			name := c.GlobalString("name")
 			return pcli.EphemeralDecrypt(name, message)

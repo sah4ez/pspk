@@ -186,7 +186,7 @@ func (p *PSPKcli) Encrypt(name, message, pubName string, link bool) (err error) 
 }
 
 func (p *PSPKcli) EphemeralEncrypt(message, pubName string, link bool) (err error) {
-	pubEphemeral, privEphemeral, err := keys.GenereateDH()
+	pubEphemeral, privEphemeral, err := keys.GenerateDH()
 	if err != nil {
 		return err
 	}
@@ -253,7 +253,7 @@ func (p *PSPKcli) EphemeralEncrypGroup(name, message, groupName string, link boo
 		return err
 	}
 
-	pubEphemeral, _, err := keys.GenereateDH()
+	pubEphemeral, _, err := keys.GenerateDH()
 	if err != nil {
 		return err
 	}

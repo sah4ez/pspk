@@ -1,4 +1,4 @@
-VERSION=0.1.5
+VERSION=0.1.10
 NAME=pspk
 GIT_REV?=$(shell git rev-parse --short HEAD)
 LDFLAGS=-ldflags "-X main.Version=$(VERSION) -X main.Hash=$(GIT_REV) -X main.BuildDate=$(BUILD_DATE)"
@@ -22,3 +22,6 @@ release: clean
 
 clean:
 	rm -rf _build
+
+release_web:
+	scp -r ./web/*  ${FREECONTENT_SPACE}:/var/www/pspk/

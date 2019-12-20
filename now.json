@@ -12,5 +12,6 @@
 		"DB_USER": "@mongo-name",
 		"DB_PASS": "@mongo-pass",
 		"DB_HOSTS": "@mongo-hosts"
-	}
+	},
+	"alias": ["pspk.now.sh"]
 }

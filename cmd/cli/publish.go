@@ -25,7 +25,7 @@ func Publish() cli.Command {
 			}
 			path = path + "/" + name
 
-			pub, priv, err := keys.GenereateDH()
+			pub, priv, err := keys.GenerateDH()
 			if err != nil {
 				return err
 			}

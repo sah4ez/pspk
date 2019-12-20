@@ -6,7 +6,10 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 
+	"github.com/pkg/errors"
 	"github.com/sah4ez/pspk/handler"
 )
 
@@ -26,7 +29,8 @@ func init() {
 
 	flag.Parse()
 	if *addrFlag == "" {
-		panic("invalid addr")
+		fmt.Println(output, "invalid flag '-addr', please enter addr like ':8080'")
+		os.Exit(1)
 	}
 }
 
@@ -38,14 +42,24 @@ func main() {
 
 	http.HandleFunc("/", handler.Handler)
 
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, syscall.SIGINT)
+
 	errs := make(chan error)
 
-	if err := http.ListenAndServe(*addrFlag, nil); err != nil {
-		os.Exit(1)
-	}
-	err := <-errs
-	if err != nil {
-		fmt.Fprintln(output, err.Error())
-		os.Exit(1)
-	}
+	go func() {
+		fmt.Fprintln(output, "started server on", *addrFlag)
+		err := http.ListenAndServe(*addrFlag, nil)
+		errs <- errors.Wrap(err, "Failed listening server")
+	}()
+
+	go func() {
+		if err := <-errs; err != nil {
+			fmt.Fprintln(output, err.Error())
+			os.Exit(1)
+		}
+	}()
+
+	<-shutdown
+	fmt.Fprintln(output, "Server terminated")
 }
