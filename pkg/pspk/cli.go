@@ -24,6 +24,7 @@ type CLI interface {
 	EphemeralEncrypGroup(name, message, groupName string, link bool) (err error)
 
 	Secret(name, pubName string) (err error)
+	Publish(name string) (err error)
 }
 
 type PSPKcli struct {
@@ -297,6 +298,34 @@ func (p *PSPKcli) Secret(name, pubName string) (err error) {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func (p *PSPKcli) Publish(name string) (err error) {
+	path, err := p.loadPath(name)
+	if err != nil {
+		return fmt.Errorf("load path to keys: %w", err)
+	}
+
+	pub, priv, err := keys.GenerateDH()
+	if err != nil {
+		return err
+	}
+	err = utils.Write(path, "pub.bin", pub[:])
+	if err != nil {
+		return err
+	}
+	err = p.api.Publish(name, pub[:])
+	if err != nil {
+		return err
+	}
+
+	err = utils.Write(path, "key.bin", priv[:])
+	if err != nil {
+		return err
+	}
+
+	fmt.Fprintln(p.out, "Generate key pair on x25519")
 	return nil
 }
 
