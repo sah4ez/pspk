@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/sah4ez/pspk/pkg/config"
 	"github.com/sah4ez/pspk/pkg/keys"
@@ -25,6 +26,11 @@ type CLI interface {
 
 	Secret(name, pubName string) (err error)
 	Publish(name string) (err error)
+
+	Group(name string) (err error)
+	StartGroup(name, groupName string, names ...string) (err error)
+	FinishGroup(name, groupName string, names ...string) (err error)
+	SecretGroup(name, groupName string, names ...string) (err error)
 }
 
 type PSPKcli struct {
@@ -327,6 +333,135 @@ func (p *PSPKcli) Publish(name string) (err error) {
 
 	fmt.Fprintln(p.out, "Generate key pair on x25519")
 	return nil
+}
+
+func (p *PSPKcli) Group(name string) (err error) {
+	if name == "" {
+		return fmt.Errorf("empty name use  --name")
+	}
+	pub, priv, err := keys.GenerateDH()
+	if err != nil {
+		return err
+	}
+	base := keys.Secret(priv[:], pub[:])
+	if err = p.api.Publish(name, base[:]); err != nil {
+		return
+	}
+
+	return nil
+}
+
+func (p *PSPKcli) StartGroup(name, groupName string, names ...string) (err error) {
+	path, err := p.loadPath(name)
+	if err != nil {
+		return fmt.Errorf("load path to keys: %w", err)
+	}
+	priv, err := utils.Read(path, "key.bin")
+	if err != nil {
+		return err
+	}
+	base, err := p.api.Load(groupName)
+	if err != nil {
+		return err
+	}
+	publicGroup := keys.Secret(priv, base)
+	err = p.api.Publish(name+groupName, publicGroup[:])
+	if err != nil {
+		return err
+	}
+
+	local_names, err := p.processNames(name, groupName, priv, names...)
+	if err != nil {
+		return err
+	}
+	// TODO add print the remaining users
+	if len(local_names) > 0 {
+		intermediate := strings.Join(local_names, "") + groupName
+		pub, err := p.api.Load(intermediate)
+		if err != nil {
+			return fmt.Errorf("start-join-group load error: %w", err)
+		}
+		dh := keys.Secret(priv, pub)
+		err = p.api.Publish(name+intermediate, dh[:])
+		if err != nil {
+			return fmt.Errorf("start-join-group publish error: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (p *PSPKcli) FinishGroup(name, groupName string, names ...string) (err error) {
+	path, err := p.loadPath(name)
+	if err != nil {
+		return fmt.Errorf("load path to keys: %w", err)
+	}
+	priv, err := utils.Read(path, "key.bin")
+	if err != nil {
+		return err
+	}
+	base, err := p.api.Load(groupName)
+	if err != nil {
+		return err
+	}
+	publicGroup := keys.Secret(priv, base)
+	err = p.api.Publish(name+groupName, publicGroup[:])
+	if err != nil {
+		return err
+	}
+	if _, err = p.processNames(name, groupName, priv, names...); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *PSPKcli) SecretGroup(name, groupName string, names ...string) (err error) {
+	path, err := p.loadPath(name)
+	if err != nil {
+		return fmt.Errorf("load path to keys: %w", err)
+	}
+	priv, err := utils.Read(path, "key.bin")
+	if err != nil {
+		return err
+	}
+	intermediate := strings.Join(names, "") + groupName
+	pub, err := p.api.Load(intermediate)
+	if err != nil {
+		return err
+	}
+	publicGroup := keys.Secret(priv, pub)
+	err = utils.Write(path, groupName+".secret", publicGroup[:])
+	if err != nil {
+		return err
+	}
+	return nil
+
+}
+
+func (p *PSPKcli) processNames(name, groupName string, priv []byte, names ...string) (local_names []string, err error) {
+	local_names = make([]string, len(names))
+	copy(local_names, names)
+
+	for i, _ := range local_names {
+		n := []string{}
+		n = append(n, local_names[:i]...)
+		n = append(n, local_names[i+1:]...)
+		n = append(n, groupName)
+		if len(n) > 0 {
+			intermediate := strings.Join(n, "")
+			pub, err := p.api.Load(intermediate)
+			if err != nil {
+				return nil, fmt.Errorf("failed load intermediate key: %w", err)
+			}
+			dh := keys.Secret(priv, pub)
+			err = p.api.Publish(name+intermediate, dh[:])
+			if err != nil {
+				return nil, fmt.Errorf("failed publish intermediate key: %w", err)
+			}
+		}
+	}
+
+	return
 }
 
 func (p *PSPKcli) loadPath(name string) (path string, err error) {
