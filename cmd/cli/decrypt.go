@@ -1,12 +1,7 @@
 package main
 
 import (
-	"encoding/base64"
-	"fmt"
-
 	"github.com/pkg/errors"
-	"github.com/sah4ez/pspk/pkg/keys"
-	"github.com/sah4ez/pspk/pkg/utils"
 	"github.com/urfave/cli"
 )
 
@@ -35,38 +30,8 @@ func Decrypt() cli.Command {
 				message = c.Args().Get(1)
 			}
 			name := c.GlobalString("name")
-			if name == "" {
-				if cfg.CurrentName == "" {
-					return fmt.Errorf("empty current name, set to config or use --name")
-				}
-				name = cfg.CurrentName
-			}
-			path = path + "/" + name
 
-			priv, err := utils.Read(path, "key.bin")
-			if err != nil {
-				return errors.Wrap(err, "read key.bin")
-			}
-			pub, err := api.Load(pubName)
-			if err != nil {
-				return err
-			}
-			chain := keys.Secret(priv, pub)
-			messageKey, err := keys.LoadMaterialKey(chain)
-			if err != nil {
-				return err
-			}
-			bytesMessage, err := base64.StdEncoding.DecodeString(message)
-			if err != nil {
-				return err
-			}
-
-			b, err := utils.Decrypt(messageKey[64:], messageKey[:32], bytesMessage)
-			if err != nil {
-				return err
-			}
-			fmt.Println(string(b))
-			return nil
+			return pcli.Decrypt(name, message, pubName)
 		},
 	}
 }
@@ -95,34 +60,7 @@ func EphemeralDecrypt() cli.Command {
 				message = c.Args().Get(1)
 			}
 			name := c.GlobalString("name")
-			if name == "" {
-				if cfg.CurrentName == "" {
-					return fmt.Errorf("empty current name, set to config or use --name")
-				}
-				name = cfg.CurrentName
-			}
-			path = path + "/" + name
-
-			priv, err := utils.Read(path, "key.bin")
-			if err != nil {
-				return errors.Wrap(err, "read key.bin")
-			}
-			bytesMessage, err := base64.StdEncoding.DecodeString(message)
-			if err != nil {
-				return err
-			}
-			chain := keys.Secret(priv, bytesMessage[:32])
-			messageKey, err := keys.LoadMaterialKey(chain)
-			if err != nil {
-				return err
-			}
-
-			b, err := utils.Decrypt(messageKey[64:], messageKey[:32], bytesMessage[32:])
-			if err != nil {
-				return err
-			}
-			fmt.Println(string(b))
-			return nil
+			return pcli.EphemeralDecrypt(name, message)
 		},
 	}
 }
@@ -151,38 +89,8 @@ func DecryptGroup() cli.Command {
 				message = c.Args().Get(1)
 			}
 			name := c.GlobalString("name")
-			if name == "" {
-				if cfg.CurrentName == "" {
-					return fmt.Errorf("empty current name, set to config or use --name")
-				}
-				name = cfg.CurrentName
-			}
-			path = path + "/" + name
 
-			priv, err := utils.Read(path, groupName+".secret")
-			if err != nil {
-				return errors.Wrap(err, "read group secret")
-			}
-			pub, err := api.Load(groupName)
-			if err != nil {
-				return err
-			}
-			chain := keys.Secret(priv, pub)
-			messageKey, err := keys.LoadMaterialKey(chain)
-			if err != nil {
-				return err
-			}
-			bytesMessage, err := base64.StdEncoding.DecodeString(message)
-			if err != nil {
-				return err
-			}
-
-			b, err := utils.Decrypt(messageKey[64:], messageKey[:32], bytesMessage)
-			if err != nil {
-				return err
-			}
-			fmt.Println(string(b))
-			return nil
+			return pcli.DecryptGroup(name, message, groupName)
 		},
 	}
 }
@@ -211,34 +119,7 @@ func EphemeralDecryptGroup() cli.Command {
 				message = c.Args().Get(1)
 			}
 			name := c.GlobalString("name")
-			if name == "" {
-				if cfg.CurrentName == "" {
-					return fmt.Errorf("empty current name, set to config or use --name")
-				}
-				name = cfg.CurrentName
-			}
-			path = path + "/" + name
-
-			priv, err := utils.Read(path, groupName+".secret")
-			if err != nil {
-				return errors.Wrap(err, "read group secret")
-			}
-			bytesMessage, err := base64.StdEncoding.DecodeString(message)
-			if err != nil {
-				return err
-			}
-			chain := keys.Secret(priv, bytesMessage[:32])
-			messageKey, err := keys.LoadMaterialKey(chain)
-			if err != nil {
-				return err
-			}
-
-			b, err := utils.Decrypt(messageKey[64:], messageKey[:32], bytesMessage[32:])
-			if err != nil {
-				return err
-			}
-			fmt.Println(string(b))
-			return nil
+			return pcli.EphemeralDecryptGroup(name, message, groupName)
 		},
 	}
 }

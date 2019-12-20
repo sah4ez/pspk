@@ -27,6 +27,7 @@ var (
 var (
 	app  *cli.App
 	api  pspk.PSPK
+	pcli pspk.CLI
 	cfg  *config.Config
 	path string
 	err  error
@@ -34,19 +35,22 @@ var (
 )
 
 func init() {
+	cfg, err = config.Load()
+	if err != nil {
+		fmt.Println("load config has error", err.Error())
+		os.Exit(2)
+	}
+
+	path = environment.LoadDataPath()
 	api = pspk.New(baseURL)
+	pcli = pspk.NewPSPKcli(api, cfg, path)
+
 	app = cli.NewApp()
 	app.Name = "pspk"
 	app.Usage = "encrypt you message and send through open communication channel"
 	app.Metadata = map[string]interface{}{"builded": BuildDate}
 	app.Version = Version + "." + Hash
 	app.Description = "Console tool for encyption/decription data through pspk.now.sh"
-	cfg, err = config.Load()
-	if err != nil {
-		fmt.Println("load config has error", err.Error())
-		os.Exit(2)
-	}
-	path = environment.LoadDataPath()
 }
 
 func main() {

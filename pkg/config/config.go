@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 
 	"github.com/sah4ez/pspk/pkg/evnironment"
@@ -48,4 +49,13 @@ func (c *Config) Save() (err error) {
 		return
 	}
 	return
+}
+
+func (c *Config) LoadCurrentName(name string) (string, error) {
+	if name == "" {
+		if c.CurrentName == "" {
+			return "", fmt.Errorf("empty current name, set to config or use --name")
+		}
+	}
+	return c.CurrentName, nil
 }
