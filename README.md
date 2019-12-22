@@ -1,9 +1,3 @@
-## Contributors
-
-Help wanted! 
-
-For implementation clients in search for developers how have skills in Android, iOS, Web or Desktop development.
-
 ## Public storage public key
 
 Specific storage for sharing public keys of pair ECDH by curve25519.
@@ -26,6 +20,7 @@ This service solve problem for persistent saving public key and send to recipien
 - [ ] simple iOS client
 - [ ] simple android client
 - [x] local http server to pspk API
+- [ ] sdk for mobile clients
 
 ## Model
 
