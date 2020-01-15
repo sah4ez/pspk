@@ -30,9 +30,11 @@ type Key struct {
 }
 
 type GetAllOptions struct {
-	Output  string `url:"output,omitempty"`
-	LastKey string `url:"last_key,omitempty"`
-	Limit   int    `url:"limit,omitempty"`
+	NameKey   string `json:"name_key"`
+	NameRegex string `json:"name_regex"`
+	Output    string `url:"output,omitempty"`
+	LastKey   string `url:"last_key,omitempty"`
+	Limit     int    `url:"limit,omitempty"`
 }
 
 type PSPK interface {
