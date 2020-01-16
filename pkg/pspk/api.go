@@ -30,8 +30,8 @@ type Key struct {
 }
 
 type GetAllOptions struct {
-	NameKey   string `json:"name_key"`
-	NameRegex string `json:"name_regex"`
+	NameKey   string `url:"name_key,omitempty"`
+	NameRegex string `url:"name_regex,omitempty"`
 	Output    string `url:"output,omitempty"`
 	LastKey   string `url:"last_key,omitempty"`
 	Limit     int    `url:"limit,omitempty"`
