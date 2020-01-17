@@ -171,7 +171,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		}
 		if name := query.Get(pspk.NameSearchKey); name != "" {
 			w.Header().Set("Content-Type", "application/json")
-			keys, err := FindByName(name)
+			keys, err := FindByName(name, r)
 			if err != nil {
 				resp["error"] = err.Error()
 				//todo: fixed handled error
@@ -401,13 +401,18 @@ func GenerateLinkId(data string) (id string, err error) {
 	return link.ID.Hex(), err
 }
 
-func FindByName(name string) (result []Request, err error) {
+func FindByName(name string, r *http.Request) (result []Request, err error) {
+	lastID, limit := loadPagination(r)
 	sess := session.Copy()
 	defer sess.Close()
 
 	c := sess.DB("pspk").C("keys")
+	query := bson.M{"name": bson.RegEx{Pattern: name + ".*"}}
 
-	err = c.Find(bson.M{"name": bson.RegEx{Pattern: name + ".*"}}).Sort("name").All(&result)
+	if lastID != "" {
+		query["_id"] = bson.M{"$gt": lastID}
+	}
+	err = c.Find(query).Limit(limit).Sort("name").All(&result)
 	if err != nil {
 		return
 	}
