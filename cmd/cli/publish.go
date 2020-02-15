@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/pkg/errors"
 	"github.com/sah4ez/pspk/pkg/keys"
 	"github.com/sah4ez/pspk/pkg/utils"
 	"github.com/urfave/cli"
@@ -27,20 +28,20 @@ func Publish() cli.Command {
 
 			pub, priv, err := keys.GenerateDH()
 			if err != nil {
-				return err
+				return errors.Wrap(err, "can not generate keys")
 			}
 			err = utils.Write(path, "pub.bin", pub[:])
 			if err != nil {
-				return err
+				return errors.Wrap(err, "can not write in pub.bin")
 			}
 			err = api.Publish(name, pub[:])
 			if err != nil {
-				return err
+				return errors.Wrap(err, "can not publish")
 			}
 
 			err = utils.Write(path, "key.bin", priv[:])
 			if err != nil {
-				return err
+				return errors.Wrap(err, "can not find the path")
 			}
 
 			fmt.Println("Generate key pair on x25519")

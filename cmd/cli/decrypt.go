@@ -45,16 +45,16 @@ func Decrypt() cli.Command {
 
 			priv, err := utils.Read(path, "key.bin")
 			if err != nil {
-				return errors.Wrap(err, "read key.bin")
+				return errors.Wrap(err, "can not read key.bin")
 			}
 			pub, err := api.Load(pubName)
 			if err != nil {
-				return err
+				return errors.Wrap(err, "can not load the public name")
 			}
 			chain := keys.Secret(priv, pub)
 			messageKey, err := keys.LoadMaterialKey(chain)
 			if err != nil {
-				return err
+				return errors.Wrap(err, "can not load message key")
 			}
 			bytesMessage, err := base64.StdEncoding.DecodeString(message)
 			if err != nil {
@@ -105,21 +105,21 @@ func EphemeralDecrypt() cli.Command {
 
 			priv, err := utils.Read(path, "key.bin")
 			if err != nil {
-				return errors.Wrap(err, "read key.bin")
+				return errors.Wrap(err, "can not read key.bin")
 			}
 			bytesMessage, err := base64.StdEncoding.DecodeString(message)
 			if err != nil {
-				return err
+				return errors.Wrap(err, "error when decode in base64 the message")
 			}
 			chain := keys.Secret(priv, bytesMessage[:32])
 			messageKey, err := keys.LoadMaterialKey(chain)
 			if err != nil {
-				return err
+				return errors.Wrap(err, "can not load message key")
 			}
 
 			b, err := utils.Decrypt(messageKey[64:], messageKey[:32], bytesMessage[32:])
 			if err != nil {
-				return err
+				return errors.Wrap(err, "can not decryp message key")
 			}
 			fmt.Println(string(b))
 			return nil
@@ -161,25 +161,25 @@ func DecryptGroup() cli.Command {
 
 			priv, err := utils.Read(path, groupName+".secret")
 			if err != nil {
-				return errors.Wrap(err, "read group secret")
+				return errors.Wrap(err, "can not read group secret")
 			}
 			pub, err := api.Load(groupName)
 			if err != nil {
-				return err
+				return errors.Wrap(err, "can not load group name")
 			}
 			chain := keys.Secret(priv, pub)
 			messageKey, err := keys.LoadMaterialKey(chain)
 			if err != nil {
-				return err
+				return errors.Wrap(err, "can not load message key")
 			}
 			bytesMessage, err := base64.StdEncoding.DecodeString(message)
 			if err != nil {
-				return err
+				return errors.Wrap(err, "can not decode in base64 the message")
 			}
 
 			b, err := utils.Decrypt(messageKey[64:], messageKey[:32], bytesMessage)
 			if err != nil {
-				return err
+				return errors.Wrap(err, "can not decrypt message")
 			}
 			fmt.Println(string(b))
 			return nil
@@ -221,21 +221,21 @@ func EphemeralDecryptGroup() cli.Command {
 
 			priv, err := utils.Read(path, groupName+".secret")
 			if err != nil {
-				return errors.Wrap(err, "read group secret")
+				return errors.Wrap(err, "can not read group secret")
 			}
 			bytesMessage, err := base64.StdEncoding.DecodeString(message)
 			if err != nil {
-				return err
+				return errors.Wrap(err, "can not decode in base64 the message")
 			}
 			chain := keys.Secret(priv, bytesMessage[:32])
 			messageKey, err := keys.LoadMaterialKey(chain)
 			if err != nil {
-				return err
+				return errors.Wrap(err, "can not load keys")
 			}
 
 			b, err := utils.Decrypt(messageKey[64:], messageKey[:32], bytesMessage[32:])
 			if err != nil {
-				return err
+				return errors.Wrap(err, "can not decrypt message")
 			}
 			fmt.Println(string(b))
 			return nil

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/sah4ez/pspk/pkg/keys"
 	"github.com/sah4ez/pspk/pkg/utils"
 	"github.com/urfave/cli"
@@ -22,12 +23,12 @@ func Group() cli.Command {
 			}
 			pub, priv, err := keys.GenerateDH()
 			if err != nil {
-				return err
+				return errors.Wrap(err, "can not generate keys")
 			}
 			base := keys.Secret(priv[:], pub[:])
 			err = api.Publish(name, base[:])
 			if err != nil {
-				return err
+				return errors.Wrap(err, "can not publish name")
 			}
 			return nil
 		},
@@ -52,16 +53,16 @@ func StartGroup() cli.Command {
 			path = path + "/" + name
 			priv, err := utils.Read(path, "key.bin")
 			if err != nil {
-				return err
+				return errors.Wrap(err, "can not read key.bin")
 			}
 			base, err := api.Load(groupName)
 			if err != nil {
-				return err
+				return errors.Wrap(err, "can not load group name")
 			}
 			publicGroup := keys.Secret(priv, base)
 			err = api.Publish(name+groupName, publicGroup[:])
 			if err != nil {
-				return err
+				return errors.Wrap(err, "can not publish group name")
 			}
 
 			names := make([]string, len(c.Args()[1:]))
@@ -77,13 +78,13 @@ func StartGroup() cli.Command {
 					pub, err := api.Load(intermediate)
 					if err != nil {
 						fmt.Println("start-join-group load error: ", err.Error())
-						return err
+						return errors.Wrap(err, "start-join-group load")
 					}
 					dh := keys.Secret(priv, pub)
 					err = api.Publish(name+intermediate, dh[:])
 					if err != nil {
 						fmt.Println("start-join-group publish error: ", err.Error())
-						return err
+						return errors.Wrap(err, "start-join-group publish")
 					}
 				}
 			}
@@ -92,13 +93,13 @@ func StartGroup() cli.Command {
 				pub, err := api.Load(intermediate)
 				if err != nil {
 					fmt.Println("start-join-group load error: ", err.Error())
-					return err
+					return errors.Wrap(err, "start-join-group load")
 				}
 				dh := keys.Secret(priv, pub)
 				err = api.Publish(name+intermediate, dh[:])
 				if err != nil {
 					fmt.Println("start-join-group publish error: ", err.Error())
-					return err
+					return errors.Wrap(err, "start-join-group publish")
 				}
 			}
 
@@ -125,16 +126,16 @@ func FinishGroup() cli.Command {
 			path = path + "/" + name
 			priv, err := utils.Read(path, "key.bin")
 			if err != nil {
-				return err
+				return errors.Wrap(err, "can not read key.bin")
 			}
 			base, err := api.Load(groupName)
 			if err != nil {
-				return err
+				return errors.Wrap(err, "can not load group name")
 			}
 			publicGroup := keys.Secret(priv, base)
 			err = api.Publish(name+groupName, publicGroup[:])
 			if err != nil {
-				return err
+				return errors.Wrap(err, "can not publish")
 			}
 
 			names := make([]string, len(c.Args()[1:]))
@@ -150,13 +151,13 @@ func FinishGroup() cli.Command {
 					pub, err := api.Load(intermediate)
 					if err != nil {
 						fmt.Println("start-join-group load error: ", err.Error())
-						return err
+						return errors.Wrap(err, "start-join-group load")
 					}
 					dh := keys.Secret(priv, pub)
 					err = api.Publish(name+intermediate, dh[:])
 					if err != nil {
 						fmt.Println("start-join-group publish error: ", err.Error())
-						return err
+						return errors.Wrap(err, "start-join-group publish")
 					}
 				}
 			}
@@ -183,17 +184,17 @@ func SecretGroup() cli.Command {
 			path = path + "/" + name
 			priv, err := utils.Read(path, "key.bin")
 			if err != nil {
-				return err
+				return errors.Wrap(err, "can not read key.bin")
 			}
 			intermediate := strings.Join(c.Args()[1:], "") + groupName
 			pub, err := api.Load(intermediate)
 			if err != nil {
-				return err
+				return errors.Wrap(err, "can not load group name")
 			}
 			publicGroup := keys.Secret(priv, pub)
 			err = utils.Write(path, groupName+".secret", publicGroup[:])
 			if err != nil {
-				return err
+				return errors.Wrap(err, "can not write in group name")
 			}
 			return nil
 		},
