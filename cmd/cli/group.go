@@ -78,13 +78,13 @@ func StartGroup() cli.Command {
 					pub, err := api.Load(intermediate)
 					if err != nil {
 						fmt.Println("start-join-group load error: ", err.Error())
-						return errors.Wrap(err, "start-join-group load")
+						return errors.Wrap(err, "StartGroup method")
 					}
 					dh := keys.Secret(priv, pub)
 					err = api.Publish(name+intermediate, dh[:])
 					if err != nil {
 						fmt.Println("start-join-group publish error: ", err.Error())
-						return errors.Wrap(err, "start-join-group publish")
+						return errors.Wrap(err, "StartGroup method")
 					}
 				}
 			}
@@ -151,13 +151,13 @@ func FinishGroup() cli.Command {
 					pub, err := api.Load(intermediate)
 					if err != nil {
 						fmt.Println("start-join-group load error: ", err.Error())
-						return errors.Wrap(err, "start-join-group load")
+						return errors.Wrap(err, "FinishGroup method")
 					}
 					dh := keys.Secret(priv, pub)
 					err = api.Publish(name+intermediate, dh[:])
 					if err != nil {
 						fmt.Println("start-join-group publish error: ", err.Error())
-						return errors.Wrap(err, "start-join-group publish")
+						return errors.Wrap(err, "FinishGroup method")
 					}
 				}
 			}

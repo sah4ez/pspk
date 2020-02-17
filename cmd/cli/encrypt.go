@@ -38,7 +38,7 @@ func Encrypt() cli.Command {
 
 			priv, err := utils.Read(path, "key.bin")
 			if err != nil {
-				return errors.Wrap(err, "can not read the path")
+				return errors.Wrap(err, "can not read key.bin")
 			}
 			pub, err := api.Load(pubName)
 			if err != nil {
