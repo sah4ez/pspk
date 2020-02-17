@@ -17,7 +17,7 @@ This service solve problem for persistent saving public key and send to recipien
 - [x] QR codes
 - [ ] simple cli tool (WIP)
 - [x] simple web-application. See: https://freecontent.space
-- [ ] simple iOS client (thanks: @l-vitaly [library for ios](https://github.com/l-vitaly/pspk-ios))
+- [ ] simple iOS client (thanks: [l-vitaly](https://github.com/l-vitaly) for [library for ios](https://github.com/l-vitaly/pspk-ios))
 - [ ] simple android client
 - [x] local http server to pspk API
 - [ ] sdk for mobile clients
