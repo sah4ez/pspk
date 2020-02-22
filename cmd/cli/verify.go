@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sah4ez/pspk/pkg/keys"
@@ -14,15 +15,11 @@ func Verify() cli.Command {
 		Name:        "verify",
 		Aliases:     []string{"v"},
 		Description: "Verify the message through ed25519",
-		Usage:       "verify <KEY_NAME> <MESSAGE>",
+		Usage:       "verify <KEY_NAME> <SIGNATURE_IN_BASE64> <MESSAGE>",
 		Action: func(c *cli.Context) error {
 			keyName := c.Args()[0]
-			message := c.Args()[1:]
-
-
-			path = path + "/" + keyName
-
-			priv, err := utils.Read(path, "key.bin")
+			signature := c.Args()[1]
+			message := c.Args()[2:]
 
 			pub, err := api.Load(keyName)
 			if err != nil {
@@ -30,11 +27,21 @@ func Verify() cli.Command {
 			}
 
 			pubArray := utils.Slice2Array32(pub)
-			privArray := utils.Slice2Array64(priv)
 
-			verify := keys.Verify(pubArray, []byte(strings.Join(message, " ")), &privArray)
-			fmt.Fprintln(out, verify)
+
+			data, err := base64.StdEncoding.DecodeString(signature)
+			sig := utils.Slice2Array64(data)
+
+			verify := keys.Verify(pubArray, []byte(strings.Join(message, " ")), &sig)
+			fmt.Fprintln(out, verifyMessage(signature, verify))
 			return nil
 		},
 	}
+}
+
+func verifyMessage(signature string, verify bool) string {
+	if verify {
+		return fmt.Sprintf("Signature %s is valid.", signature)
+	}
+	return fmt.Sprintf("Signature %s is NOT valid.", signature)
 }

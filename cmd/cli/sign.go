@@ -28,29 +28,14 @@ func Sign() cli.Command {
 
 			path = path + "/" + name
 
-			pub, priv, err := keys.GenerateDH()
-			if err != nil {
-				return errors.Wrap(err, "can not generate keys")
-			}
-			err = utils.Write(path, "pub.bin", pub[:])
-			if err != nil {
-				return errors.Wrap(err, "can not write in pub.bin")
-			}
-			err = api.Publish(name, pub[:])
-			if err != nil {
-				return errors.Wrap(err, "can not publish")
-			}
-
-			err = utils.Write(path, "key.bin", priv[:])
-			if err != nil {
-				return errors.Wrap(err, "can not find the path")
-			}
-
+			priv, err := utils.Read(path, "key.bin")
 			if err != nil {
 				return errors.Wrap(err, "can not read key.bin")
 			}
 
-			sign := keys.Sign(pub, []byte(strings.Join(message, " ")), utils.Random())
+			privArray := utils.Slice2Array32(priv)
+
+			sign := keys.Sign(&privArray, []byte(strings.Join(message, " ")), utils.Random())
 			data := base64.StdEncoding.EncodeToString(sign[:])
 
 			fmt.Fprintln(out, data)
