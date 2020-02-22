@@ -74,6 +74,7 @@ func main() {
 		DecryptGroup(),
 		EphemeralDecryptGroup(),
 		Sign(),
+		Verify(),
 	}
 
 	err = app.Run(os.Args)

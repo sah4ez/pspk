@@ -1,9 +1,13 @@
 package main
 
 import (
+	"encoding/base64"
+	"fmt"
 	"github.com/pkg/errors"
+	"github.com/sah4ez/pspk/pkg/keys"
 	"github.com/sah4ez/pspk/pkg/utils"
 	"github.com/urfave/cli"
+	"strings"
 )
 
 func Sign() cli.Command {
@@ -24,12 +28,32 @@ func Sign() cli.Command {
 
 			path = path + "/" + name
 
-			priv, err := utils.Read(path, "key.bin")
+			pub, priv, err := keys.GenerateDH()
+			if err != nil {
+				return errors.Wrap(err, "can not generate keys")
+			}
+			err = utils.Write(path, "pub.bin", pub[:])
+			if err != nil {
+				return errors.Wrap(err, "can not write in pub.bin")
+			}
+			err = api.Publish(name, pub[:])
+			if err != nil {
+				return errors.Wrap(err, "can not publish")
+			}
+
+			err = utils.Write(path, "key.bin", priv[:])
+			if err != nil {
+				return errors.Wrap(err, "can not find the path")
+			}
 
 			if err != nil {
 				return errors.Wrap(err, "can not read key.bin")
 			}
 
+			sign := keys.Sign(pub, []byte(strings.Join(message, " ")), utils.Random())
+			data := base64.StdEncoding.EncodeToString(sign[:])
+
+			fmt.Fprintln(out, data)
 			return nil
 		},
 	}
