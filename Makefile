@@ -1,8 +1,9 @@
-VERSION=0.1.14
+VERSION=0.1.15
 NAME=pspk
 GIT_REV?=$(shell git rev-parse --short HEAD)
 LDFLAGS=-ldflags "-X main.Version=$(VERSION) -X main.Hash=$(GIT_REV) -X main.BuildDate=$(BUILD_DATE)"
 GO=GO111MOUDLE=on go
+SIGNATORY=pspk-sign
 
 
 build:

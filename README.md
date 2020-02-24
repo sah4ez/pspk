@@ -13,6 +13,7 @@ This service solve problem for persistent saving public key and send to recipien
 - [x] share some encrypted data via one-time link
 - [ ] support other elliptic curve cryptography algorithms
 - [ ] ephemeral encryption via API method (generate ephemeral private key on server, ecnrypt by public key and return link to data)
+- [x] signature and verification
 - [ ] verification of signature by link
 - [x] QR codes
 - [ ] simple cli tool (WIP)
@@ -127,6 +128,8 @@ COMMANDS:
      ephemeral-encrypt-group, eeg  Encrypt input message with ephemeral key
      decrypt-group, dg             dg <GROUP_NAME> base64
      ephemeral-decrypt-group, edg  Decrypt input message with ephemral shared key
+     sign, s                       --name <KEY_NAME> sign <MESSAGE>
+	 verify, v                     verify <KEY_NAME> <SIGNATURE_IN_BASE64> <MESSAGE>
      help, h                       Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
@@ -225,6 +228,27 @@ pspk --name bob ephemeral-decryp-group base base64
 ```
 
 **NOTE** All intermediate secrets would saved in pspk storage!
+
+## pspk signature and verification
+
+You can sign text message or output with pspk and you private key:
+```bash
+pspk --name bob sign Hello Alice!
+osnfKYmhRNQx7/f3rcpA9jV0T6i/z/+XwyNFcSTGW7QKtJaBzRlbnf7Prg7Q5Hj90rfN2++CKY21IfPcIcAsAQ==
+
+# now Alice can check signature of bob
+pspk sign bob osnfKYmhRNQx7/f3rcpA9jV0T6i/z/+XwyNFcSTGW7QKtJaBzRlbnf7Prg7Q5Hj90rfN2++CKY21IfPcIcAsAQ== Hello Alice!
+Signature osnfKYmhRNQx7/f3rcpA9jV0T6i/z/+XwyNFcSTGW7QKtJaBzRlbnf7Prg7Q5Hj90rfN2++CKY21IfPcIcAsAQ== is valid.
+```
+or file:
+```bash
+pspk --name bob sign --file ./bin/pspk
+osnfKYmhRNQx7/f3rcpA9jV0T6i/z/+XwyNFcSTGW7QKtJaBzRlbnf7Prg7Q5Hj90rfN2++CKY21IfPcIcAsAQ==
+
+# now Alice can check signature of bob
+pspk sign bob osnfKYmhRNQx7/f3rcpA9jV0T6i/z/+XwyNFcSTGW7QKtJaBzRlbnf7Prg7Q5Hj90rfN2++CKY21IfPcIcAsAQ== --file ./bin/pspk
+Signature osnfKYmhRNQx7/f3rcpA9jV0T6i/z/+XwyNFcSTGW7QKtJaBzRlbnf7Prg7Q5Hj90rfN2++CKY21IfPcIcAsAQ== is valid.
+```
 
 ## pspk config
 
