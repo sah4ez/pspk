@@ -7,6 +7,7 @@ import (
 	"github.com/sah4ez/pspk/pkg/utils"
 	"github.com/skip2/go-qrcode"
 	"github.com/urfave/cli"
+	"os/user"
 )
 
 // Publish a public key of pair x25519
@@ -51,14 +52,12 @@ func Publish() cli.Command {
 			}
 
 			if c.Bool("qr") {
-				qrPath := "~/.local/share/pspk/"
-				q, err := qrcode.Encode(string(pub[:]), qrcode.Highest, 256)
+				usr, err := user.Current()
 				if err != nil {
-
 				}
-				er := utils.Write(qrPath, "pub.png", q)
-				if er != nil {
-
+				qrFile := usr.HomeDir + "/.local/share/pspk/" + name + "/" + name + ".png"
+				err = qrcode.WriteFile(string(pub[:]),qrcode.Medium, 256, qrFile)
+				if err != nil {
 				}
 			}
 
