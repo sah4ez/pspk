@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-
 	"github.com/pkg/errors"
 	"github.com/sah4ez/pspk/pkg/keys"
 	"github.com/sah4ez/pspk/pkg/utils"
+	"github.com/skip2/go-qrcode"
 	"github.com/urfave/cli"
 )
 
@@ -16,6 +16,12 @@ func Publish() cli.Command {
 		Description: "Generate x25519 pair to pspk",
 		Usage:       "--name <NAME> publish",
 		Aliases:     []string{"p"},
+		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name:  "qr",
+				Usage: "Generate QR",
+			},
+		},
 		Action: func(c *cli.Context) error {
 			name := c.GlobalString("name")
 			if name == "" {
@@ -42,6 +48,18 @@ func Publish() cli.Command {
 			err = utils.Write(path, "key.bin", priv[:])
 			if err != nil {
 				return errors.Wrap(err, "can not find the path")
+			}
+
+			if c.Bool("qr") {
+				qrPath := "~/.local/share/pspk/"
+				q, err := qrcode.Encode(string(pub[:]), qrcode.Highest, 256)
+				if err != nil {
+
+				}
+				er := utils.Write(qrPath, "pub.png", q)
+				if er != nil {
+
+				}
 			}
 
 			fmt.Println("Generate key pair on x25519")
