@@ -22,6 +22,10 @@ func Publish() cli.Command {
 				Name:  "qr",
 				Usage: "Generate QR",
 			},
+			&cli.StringFlag{
+				Name:  "path",
+				Usage: "Specify path",
+			},
 		},
 		Action: func(c *cli.Context) error {
 			name := c.GlobalString("name")
@@ -52,12 +56,19 @@ func Publish() cli.Command {
 			}
 
 			if c.Bool("qr") {
-				usr, err := user.Current()
-				if err != nil {
+				path := c.String("path")
+				if path != "" {
+					path = fmt.Sprintf("%s/%s.png", path, name)
+				} else {
+					usr, err := user.Current()
+					if err != nil {
+						return errors.Wrap(err, "can not get information about use")
+					}
+					path = fmt.Sprintf("%s/.local/share/pspk/%[2]s/%[2]s.png", usr.HomeDir, name)
 				}
-				qrFile := usr.HomeDir + "/.local/share/pspk/" + name + "/" + name + ".png"
-				err = qrcode.WriteFile(string(pub[:]),qrcode.Medium, 256, qrFile)
+				err = qrcode.WriteFile(string(pub[:]), qrcode.Medium, 256, path)
 				if err != nil {
+					return errors.Wrap(err, "can not create file")
 				}
 			}
 
