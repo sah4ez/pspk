@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/pkg/errors"
+	environment "github.com/sah4ez/pspk/pkg/evnironment"
 	"github.com/sah4ez/pspk/pkg/keys"
 	"github.com/sah4ez/pspk/pkg/utils"
 	"github.com/skip2/go-qrcode"
 	"github.com/urfave/cli"
-	"os/user"
 )
 
 // Publish a public key of pair x25519
@@ -56,19 +57,19 @@ func Publish() cli.Command {
 			}
 
 			if c.Bool("qr") {
-				path := c.String("path")
-				if path != "" {
-					path = fmt.Sprintf("%s/%s.png", path, name)
+				qrPath := c.String("path")
+				if qrPath != "" {
+					qrPath = fmt.Sprintf("%s/%s.png", qrPath, name)
 				} else {
-					usr, err := user.Current()
-					if err != nil {
-						return errors.Wrap(err, "can not get information about use")
-					}
-					path = fmt.Sprintf("%s/.local/share/pspk/%[2]s/%[2]s.png", usr.HomeDir, name)
+					qrPath = fmt.Sprintf("%s/%[2]s/", environment.LoadDataPath(), name)
 				}
-				err = qrcode.WriteFile(string(pub[:]), qrcode.Medium, 256, path)
+				err = qrcode.WriteFile(string(pub[:]), qrcode.Medium, 256, qrPath+"pub.png")
 				if err != nil {
-					return errors.Wrap(err, "can not create file")
+					return errors.Wrap(err, "can not create qrcode pub file")
+				}
+				err = qrcode.WriteFile(string(priv[:]), qrcode.Medium, 256, qrPath+"key.png")
+				if err != nil {
+					return errors.Wrap(err, "can not create qrcode key file")
 				}
 			}
 

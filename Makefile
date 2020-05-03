@@ -1,4 +1,4 @@
-VERSION=0.1.15
+VERSION=0.1.16
 NAME=pspk
 GIT_REV?=$(shell git rev-parse --short HEAD)
 LDFLAGS=-ldflags "-X main.Version=$(VERSION) -X main.Hash=$(GIT_REV) -X main.BuildDate=$(BUILD_DATE)"
