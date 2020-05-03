@@ -39,6 +39,7 @@ type PSPKcli struct {
 	path    string
 	baseURL string
 	out     io.Writer
+	fs      utils.FS
 }
 
 // Decrypt decryp message by name key, public name of recipeint and message
@@ -48,15 +49,15 @@ func (p *PSPKcli) Decrypt(name, message, pubName string) (err error) {
 		return fmt.Errorf("load path to keys: %w", err)
 	}
 
-	priv, err := utils.Read(path, "key.bin")
+	priv, err := p.fs.Read(path, "key.bin")
 	if err != nil {
 		return fmt.Errorf("read key.bin: %w", err)
 	}
-	pub, err := p.api.Load(pubName)
-	if err != nil {
-		return err
+	pub := p.api.Load(pubName)
+	if pub.Error != nil {
+		return pub.Error
 	}
-	chain := keys.Secret(priv, pub)
+	chain := keys.Secret(priv, pub.Key)
 	messageKey, err := keys.LoadMaterialKey(chain)
 	if err != nil {
 		return err
@@ -81,7 +82,7 @@ func (p *PSPKcli) EphemeralDecrypt(name, message string) (err error) {
 		return fmt.Errorf("load path to keys: %w", err)
 	}
 
-	priv, err := utils.Read(path, "key.bin")
+	priv, err := p.fs.Read(path, "key.bin")
 	if err != nil {
 		return fmt.Errorf("read key.bin: %w", err)
 	}
@@ -110,15 +111,15 @@ func (p *PSPKcli) DecryptGroup(name, message, groupName string) (err error) {
 		return fmt.Errorf("load path to keys: %w", err)
 	}
 
-	priv, err := utils.Read(path, groupName+".secret")
+	priv, err := p.fs.Read(path, groupName+".secret")
 	if err != nil {
 		return fmt.Errorf("read key.bin: %w", err)
 	}
-	pub, err := p.api.Load(groupName)
-	if err != nil {
-		return err
+	pub := p.api.Load(groupName)
+	if pub.Error != nil {
+		return pub.Error
 	}
-	chain := keys.Secret(priv, pub)
+	chain := keys.Secret(priv, pub.Key)
 	messageKey, err := keys.LoadMaterialKey(chain)
 	if err != nil {
 		return err
@@ -142,7 +143,7 @@ func (p *PSPKcli) EphemeralDecryptGroup(name, message, groupName string) (err er
 		return fmt.Errorf("load path to keys: %w", err)
 	}
 
-	priv, err := utils.Read(path, groupName+".secret")
+	priv, err := p.fs.Read(path, groupName+".secret")
 	if err != nil {
 		return fmt.Errorf("read group secret: %w", err)
 	}
@@ -170,15 +171,15 @@ func (p *PSPKcli) Encrypt(name, message, pubName string, link bool) (err error) 
 		return fmt.Errorf("load path to keys: %w", err)
 	}
 
-	priv, err := utils.Read(path, "key.bin")
+	priv, err := p.fs.Read(path, "key.bin")
 	if err != nil {
 		return fmt.Errorf("read key.bin %w", err)
 	}
-	pub, err := p.api.Load(pubName)
-	if err != nil {
-		return err
+	pub := p.api.Load(pubName)
+	if pub.Error != nil {
+		return pub.Error
 	}
-	chain := keys.Secret(priv, pub)
+	chain := keys.Secret(priv, pub.Key)
 
 	messageKey, err := keys.LoadMaterialKey(chain)
 	if err != nil {
@@ -199,11 +200,11 @@ func (p *PSPKcli) EphemeralEncrypt(message, pubName string, link bool) (err erro
 	if err != nil {
 		return err
 	}
-	pub, err := p.api.Load(pubName)
-	if err != nil {
-		return err
+	pub := p.api.Load(pubName)
+	if pub.Error != nil {
+		return pub.Error
 	}
-	chain := keys.Secret(privEphemeral[:], pub)
+	chain := keys.Secret(privEphemeral[:], pub.Key)
 
 	messageKey, err := keys.LoadMaterialKey(chain)
 	if err != nil {
@@ -227,15 +228,15 @@ func (p *PSPKcli) EncryptGroup(name, message, groupName string, link bool) (err 
 		return fmt.Errorf("load path to keys: %w", err)
 	}
 
-	priv, err := utils.Read(path, groupName+".secret")
+	priv, err := p.fs.Read(path, groupName+".secret")
 	if err != nil {
 		return err
 	}
-	pub, err := p.api.Load(groupName)
-	if err != nil {
-		return err
+	pub := p.api.Load(groupName)
+	if pub.Error != nil {
+		return pub.Error
 	}
-	chain := keys.Secret(priv, pub)
+	chain := keys.Secret(priv, pub.Key)
 
 	messageKey, err := keys.LoadMaterialKey(chain)
 	if err != nil {
@@ -257,7 +258,7 @@ func (p *PSPKcli) EphemeralEncrypGroup(name, message, groupName string, link boo
 		return fmt.Errorf("load path to keys: %w", err)
 	}
 
-	priv, err := utils.Read(path, groupName+".secret")
+	priv, err := p.fs.Read(path, groupName+".secret")
 	if err != nil {
 		return err
 	}
@@ -289,18 +290,18 @@ func (p *PSPKcli) Secret(name, pubName string) (err error) {
 		return fmt.Errorf("load path to keys: %w", err)
 	}
 
-	priv, err := utils.Read(path, "key.bin")
+	priv, err := p.fs.Read(path, "key.bin")
 	if err != nil {
 		return err
 	}
-	pub, err := p.api.Load(pubName)
-	if err != nil {
-		return err
+	pub := p.api.Load(pubName)
+	if pub.Error != nil {
+		return pub.Error
 	}
-	dh := keys.Secret(priv, pub)
+	dh := keys.Secret(priv, pub.Key)
 	fmt.Fprintln(p.out, base64.StdEncoding.EncodeToString(dh))
 
-	err = utils.Write(path, pubName+".secret.bin", dh[:])
+	err = p.fs.Write(path, pubName+".secret.bin", dh[:])
 	if err != nil {
 		return err
 	}
@@ -317,7 +318,7 @@ func (p *PSPKcli) Publish(name string) (err error) {
 	if err != nil {
 		return err
 	}
-	err = utils.Write(path, "pub.bin", pub[:])
+	err = p.fs.Write(path, "pub.bin", pub[:])
 	if err != nil {
 		return err
 	}
@@ -326,7 +327,7 @@ func (p *PSPKcli) Publish(name string) (err error) {
 		return err
 	}
 
-	err = utils.Write(path, "key.bin", priv[:])
+	err = p.fs.Write(path, "key.bin", priv[:])
 	if err != nil {
 		return err
 	}
@@ -356,15 +357,15 @@ func (p *PSPKcli) StartGroup(name, groupName string, names ...string) (err error
 	if err != nil {
 		return fmt.Errorf("load path to keys: %w", err)
 	}
-	priv, err := utils.Read(path, "key.bin")
+	priv, err := p.fs.Read(path, "key.bin")
 	if err != nil {
 		return err
 	}
-	base, err := p.api.Load(groupName)
-	if err != nil {
-		return err
+	base := p.api.Load(groupName)
+	if base.Error != nil {
+		return base.Error
 	}
-	publicGroup := keys.Secret(priv, base)
+	publicGroup := keys.Secret(priv, base.Key)
 	err = p.api.Publish(name+groupName, publicGroup[:])
 	if err != nil {
 		return err
@@ -377,11 +378,12 @@ func (p *PSPKcli) StartGroup(name, groupName string, names ...string) (err error
 	// TODO add print the remaining users
 	if len(local_names) > 0 {
 		intermediate := strings.Join(local_names, "") + groupName
-		pub, err := p.api.Load(intermediate)
-		if err != nil {
-			return fmt.Errorf("start-join-group load error: %w", err)
+
+		pub := p.api.Load(intermediate)
+		if pub.Error != nil {
+			return fmt.Errorf("start-join-group load error: %w", pub.Error)
 		}
-		dh := keys.Secret(priv, pub)
+		dh := keys.Secret(priv, pub.Key)
 		err = p.api.Publish(name+intermediate, dh[:])
 		if err != nil {
 			return fmt.Errorf("start-join-group publish error: %w", err)
@@ -396,15 +398,16 @@ func (p *PSPKcli) FinishGroup(name, groupName string, names ...string) (err erro
 	if err != nil {
 		return fmt.Errorf("load path to keys: %w", err)
 	}
-	priv, err := utils.Read(path, "key.bin")
+	priv, err := p.fs.Read(path, "key.bin")
 	if err != nil {
 		return err
 	}
-	base, err := p.api.Load(groupName)
-	if err != nil {
-		return err
+
+	base := p.api.Load(groupName)
+	if base.Error != nil {
+		return base.Error
 	}
-	publicGroup := keys.Secret(priv, base)
+	publicGroup := keys.Secret(priv, base.Key)
 	err = p.api.Publish(name+groupName, publicGroup[:])
 	if err != nil {
 		return err
@@ -420,17 +423,18 @@ func (p *PSPKcli) SecretGroup(name, groupName string, names ...string) (err erro
 	if err != nil {
 		return fmt.Errorf("load path to keys: %w", err)
 	}
-	priv, err := utils.Read(path, "key.bin")
+	priv, err := p.fs.Read(path, "key.bin")
 	if err != nil {
 		return err
 	}
 	intermediate := strings.Join(names, "") + groupName
-	pub, err := p.api.Load(intermediate)
-	if err != nil {
-		return err
+
+	pub := p.api.Load(intermediate)
+	if pub.Error != nil {
+		return pub.Error
 	}
-	publicGroup := keys.Secret(priv, pub)
-	err = utils.Write(path, groupName+".secret", publicGroup[:])
+	publicGroup := keys.Secret(priv, pub.Key)
+	err = p.fs.Write(path, groupName+".secret", publicGroup[:])
 	if err != nil {
 		return err
 	}
@@ -449,11 +453,12 @@ func (p *PSPKcli) processNames(name, groupName string, priv []byte, names ...str
 		n = append(n, groupName)
 		if len(n) > 0 {
 			intermediate := strings.Join(n, "")
-			pub, err := p.api.Load(intermediate)
-			if err != nil {
-				return nil, fmt.Errorf("failed load intermediate key: %w", err)
+
+			pub := p.api.Load(intermediate)
+			if pub.Error != nil {
+				return nil, fmt.Errorf("failed load intermediate key: %w", pub.Error)
 			}
-			dh := keys.Secret(priv, pub)
+			dh := keys.Secret(priv, pub.Key)
 			err = p.api.Publish(name+intermediate, dh[:])
 			if err != nil {
 				return nil, fmt.Errorf("failed publish intermediate key: %w", err)
@@ -466,6 +471,9 @@ func (p *PSPKcli) processNames(name, groupName string, priv []byte, names ...str
 
 func (p *PSPKcli) loadPath(name string) (path string, err error) {
 
+	if p.cfg == nil {
+		return "/" + name, nil
+	}
 	if name, err = p.cfg.LoadCurrentName(name); err != nil {
 		return
 	}
@@ -475,22 +483,27 @@ func (p *PSPKcli) loadPath(name string) (path string, err error) {
 
 func (p *PSPKcli) generateLink(isLink bool, data string) error {
 	if isLink {
-		id, err := p.api.GenerateLink(data)
-		if err != nil {
-			return err
+		link := p.api.GenerateLink(data)
+		if link.Error != nil {
+			return link.Error
 		}
-		fmt.Fprintln(p.out, p.baseURL+"/?link="+id)
+		fmt.Fprintln(p.out, p.baseURL+"/?link="+link.Link)
 	}
 	return nil
 }
 
 // NewPSPKcli return new API client for CLI interface
-func NewPSPKcli(api PSPK, cfg *config.Config, basePath string, baseURL string, out io.Writer) *PSPKcli {
+func NewPSPKcli(api PSPK, cfg *config.Config, basePath string, baseURL string, out io.Writer, fs utils.FS) *PSPKcli {
+	if cfg != nil {
+		cfg.Init()
+	}
+
 	return &PSPKcli{
 		cfg:     cfg,
 		api:     api,
 		path:    basePath,
 		baseURL: baseURL,
 		out:     out,
+		fs:      fs,
 	}
 }

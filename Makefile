@@ -5,6 +5,7 @@ LDFLAGS=-ldflags "-X main.Version=$(VERSION) -X main.Hash=$(GIT_REV) -X main.Bui
 GO=GO111MOUDLE=on go
 
 
+.PHONY: build
 build:
 	VERSION=$(VERSION)-dev $(GO) build $(LDFLAGS) -o bin/${NAME} ./cmd/cli/
 
@@ -20,8 +21,18 @@ release: clean
 	GOOS=linux   GOARCH=arm64 $(GO) build $(LDFLAGS) -o _build/$(NAME)-srv-$(VERSION)-linux-arm64 ./cmd/server
 	cd _build; sha256sum * > sha256sums.txt
 
+wasm_exec.js: ./web_wasm/wasm_exec.js
+	cp "${GOROOT}/misc/wasm/wasm_exec.js" ./web_wasm/
+
+.PHONY: wasm
+wasm: wasm_exec.js
+	env GOOS=js GOARCH=wasm go build ${LDFLAGS} -o ./bin/${NAME}.wasm ./cmd/wasm/
+	env GOOS=js GOARCH=wasm go build ${LDFLAGS} -o ./bin/publish ./cmd/wasm/publish/.
+
+.PHONY: clean
 clean:
 	rm -rf _build
 
+.PHONY: release_web
 release_web:
 	scp -r ./web/*  ${FREECONTENT_SPACE}:/var/www/pspk/

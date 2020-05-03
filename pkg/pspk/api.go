@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -35,12 +36,32 @@ type GetAllOptions struct {
 	Limit   int    `url:"limit,omitempty"`
 }
 
+type Link struct {
+	Link  string
+	Error error
+}
+
+type PublicKey struct {
+	Key   []byte
+	Error error
+}
+
+type DownloadData struct {
+	Data  string
+	Error error
+}
+
+type Keys struct {
+	Keys  []Key
+	Error error
+}
+
 type PSPK interface {
-	Publish(name string, key []byte) error
-	Load(name string) ([]byte, error)
-	GenerateLink(string) (string, error)
-	DownloadByLink(string) (string, error)
-	GetAll(opts GetAllOptions) ([]Key, error)
+	Publish(name string, key []byte) (err error)
+	Load(name string) (key *PublicKey)
+	GenerateLink(data string) (link *Link)
+	DownloadByLink(link string) (data *DownloadData)
+	GetAll(opts GetAllOptions) (keys *Keys)
 }
 
 type pspk struct {
@@ -55,9 +76,9 @@ func New(basePath string) *pspk {
 	}
 }
 
-func (p *pspk) Publish(name string, key []byte) error {
-	if err := validation.CheckLimitNameLen(name); err != nil {
-		return err
+func (p *pspk) Publish(name string, key []byte) (err error) {
+	if err = validation.CheckLimitNameLen(name); err != nil {
+		return
 	}
 	body := struct {
 		Name string `json:"name"`
@@ -66,16 +87,31 @@ func (p *pspk) Publish(name string, key []byte) error {
 		Name: name,
 		Key:  base64.StdEncoding.EncodeToString(key),
 	}
+
 	req, err := p.newRequest("POST", body, nil)
 	if err != nil {
-		return err
+		return
 	}
-	return p.doRequest(req, nil)
+
+	resource := struct {
+		Access bool   `json:"access"`
+		Msg    string `json:"msg"`
+	}{}
+
+	err = p.doRequest(req, &resource)
+	if err != nil {
+		err = fmt.Errorf("Do requset laod failed: %s", err)
+		return
+	}
+	return
 }
 
-func (p *pspk) Load(name string) ([]byte, error) {
+func (p *pspk) Load(name string) (key *PublicKey) {
+
+	key = &PublicKey{}
 	if err := validation.CheckLimitNameLen(name); err != nil {
-		return nil, err
+		key.Error = fmt.Errorf("lager limt of name: %s", err)
+		return
 	}
 	body := struct {
 		Name string `json:"name"`
@@ -84,48 +120,63 @@ func (p *pspk) Load(name string) ([]byte, error) {
 	}
 	req, err := p.newRequest("POST", body, nil)
 	if err != nil {
-		return nil, err
+		key.Error = fmt.Errorf("Create requset load failed: %s", err)
+		return
 	}
 	resource := struct {
 		Key string `json:"key"`
 	}{}
 	err = p.doRequest(req, &resource)
 	if err != nil {
-		return nil, err
+		key.Error = fmt.Errorf("Do requset laod failed: %s", err)
+		return
 	}
-	return base64.StdEncoding.DecodeString(resource.Key)
+	key.Key, key.Error = base64.StdEncoding.DecodeString(resource.Key)
+	return
 }
 
-func (p *pspk) GenerateLink(d string) (string, error) {
-	if len(d) == 0 {
-		return "", errors.New("empty data for generation link")
+func (p *pspk) GenerateLink(data string) (link *Link) {
+
+	link = &Link{}
+	if len(data) == 0 {
+		link.Error = fmt.Errorf("empty data for generation link")
+		return
 	}
 	body := struct {
 		Method string `json:"method"`
 		Data   string `json:"data"`
 	}{
 		Method: LinkKey,
-		Data:   d,
+		Data:   data,
 	}
 	req, err := p.newRequest("POST", body, nil)
 	if err != nil {
-		return "", err
+		link.Error = fmt.Errorf("Create request for generate link: %s", err)
+		return
 	}
 	resource := struct {
 		Link string `json:"link"`
 	}{}
 	err = p.doRequest(req, &resource)
 	if err != nil {
-		return "", err
+		link.Error = fmt.Errorf("Generate link through server failed: %s", err)
+		return
 	}
-	return resource.Link, nil
+	link.Link = resource.Link
+	return
 }
 
-func (p *pspk) DownloadByLink(link string) (string, error) {
+func (p *pspk) DownloadByLink(link string) (data *DownloadData) {
+	data = &DownloadData{}
 	req, err := http.NewRequest("GET", link, nil)
+	if err != nil {
+		data.Error = err
+		return
+	}
 	resp, err := p.client.Do(req)
 	if err != nil {
-		return "", err
+		data.Error = err
+		return
 	}
 	defer resp.Body.Close()
 
@@ -136,22 +187,29 @@ func (p *pspk) DownloadByLink(link string) (string, error) {
 	dec := json.NewDecoder(resp.Body)
 	err = dec.Decode(&b)
 	if err != nil {
-		return "", err
+		data.Error = err
+		return
 	}
-	return b.Data, nil
+	data.Data = b.Data
+	return
 }
 
-func (p *pspk) GetAll(options GetAllOptions) ([]Key, error) {
+func (p *pspk) GetAll(options GetAllOptions) (keys *Keys) {
+
+	keys = &Keys{}
 	req, err := p.newRequest("GET", nil, options)
 	if err != nil {
-		return nil, err
+		keys.Error = err
+		return
 	}
 	var resource []Key
 	err = p.doRequest(req, &resource)
 	if err != nil {
-		return nil, err
+		keys.Error = err
+		return
 	}
-	return resource, nil
+	keys.Keys = resource
+	return
 }
 
 func (p *pspk) newRequest(method string, body, options interface{}) (*http.Request, error) {
@@ -190,20 +248,22 @@ func (p *pspk) newRequest(method string, body, options interface{}) (*http.Reque
 }
 
 func (p *pspk) doRequest(req *http.Request, v interface{}) error {
-	resp, err := p.client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	err = checkResponseError(resp)
-	if err != nil {
-		return err
-	}
-	if v != nil {
-		if err := json.NewDecoder(resp.Body).Decode(&v); err != nil {
-			return err
-		}
-	}
+
+	http.Get("https://pspk.now.sh")
+	// resp, err := p.client.Do(req)
+	// if err != nil {
+	// return err
+	// }
+	// defer resp.Body.Close()
+	// err = checkResponseError(resp)
+	// if err != nil {
+	// return err
+	// }
+	// if v != nil {
+	// if err := json.NewDecoder(resp.Body).Decode(&v); err != nil {
+	// return err
+	// }
+	// }
 	return nil
 }
 

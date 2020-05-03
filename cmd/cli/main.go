@@ -8,6 +8,7 @@ import (
 	"github.com/sah4ez/pspk/pkg/config"
 	environment "github.com/sah4ez/pspk/pkg/evnironment"
 	"github.com/sah4ez/pspk/pkg/pspk"
+	"github.com/sah4ez/pspk/pkg/utils"
 	"github.com/urfave/cli"
 )
 
@@ -35,6 +36,7 @@ var (
 )
 
 func init() {
+	cfg.Init()
 	cfg, err = config.Load()
 	if err != nil {
 		fmt.Println("load config has error", err.Error())
@@ -43,7 +45,8 @@ func init() {
 
 	path = environment.LoadDataPath()
 	api = pspk.New(baseURL)
-	pcli = pspk.NewPSPKcli(api, cfg, path, baseURL, out)
+	fs := utils.FileStorage{}
+	pcli = pspk.NewPSPKcli(api, cfg, path, baseURL, out, fs)
 
 	app = cli.NewApp()
 	app.Name = "pspk"

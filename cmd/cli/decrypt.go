@@ -21,11 +21,11 @@ func Decrypt() cli.Command {
 			pubName := c.Args().Get(0)
 			var message string
 			if link := c.String("link"); len(link) > 0 {
-				m, err := api.DownloadByLink(link)
-				if err != nil {
-					return errors.Wrap(err, "download by link failed")
+				m := api.DownloadByLink(link)
+				if m.Error != nil {
+					return errors.Wrap(m.Error, "download by link failed")
 				}
-				message = m
+				message = m.Data
 			} else {
 				message = c.Args().Get(1)
 			}
@@ -51,11 +51,11 @@ func EphemeralDecrypt() cli.Command {
 		Action: func(c *cli.Context) error {
 			var message string
 			if link := c.String("link"); len(link) > 0 {
-				m, err := api.DownloadByLink(link)
-				if err != nil {
-					return errors.Wrap(err, "download by link failed")
+				m := api.DownloadByLink(link)
+				if m.Error != nil {
+					return errors.Wrap(m.Error, "download by link failed")
 				}
-				message = m
+				message = m.Data
 			} else {
 				message = c.Args().Get(0)
 			}
@@ -80,11 +80,11 @@ func DecryptGroup() cli.Command {
 			groupName := c.Args().Get(0)
 			var message string
 			if link := c.String("link"); len(link) > 0 {
-				m, err := api.DownloadByLink(link)
-				if err != nil {
-					return errors.Wrap(err, "download by link failed")
+				m := api.DownloadByLink(link)
+				if m.Error != nil {
+					return errors.Wrap(m.Error, "download by link failed")
 				}
-				message = m
+				message = m.Data
 			} else {
 				message = c.Args().Get(1)
 			}
@@ -110,11 +110,11 @@ func EphemeralDecryptGroup() cli.Command {
 			groupName := c.Args().Get(0)
 			var message string
 			if link := c.String("link"); len(link) > 0 {
-				m, err := api.DownloadByLink(link)
-				if err != nil {
-					return errors.Wrap(err, "download by link failed")
+				m := api.DownloadByLink(link)
+				if m.Error != nil {
+					return errors.Wrap(m.Error, "download by link failed")
 				}
-				message = m
+				message = m.Data
 			} else {
 				message = c.Args().Get(1)
 			}
