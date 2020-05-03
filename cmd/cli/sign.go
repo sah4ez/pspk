@@ -57,9 +57,9 @@ func Sign() cli.Command {
 			privArray := utils.Slice2Array32(priv)
 
 			sign := keys.Sign(&privArray, data, utils.Random())
-			sginature := base64.StdEncoding.EncodeToString(sign[:])
+			signature := base64.StdEncoding.EncodeToString(sign[:])
 
-			fmt.Fprintln(out, sginature)
+			fmt.Fprintln(out, signature)
 			return nil
 		},
 	}
