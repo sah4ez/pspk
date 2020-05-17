@@ -248,22 +248,20 @@ func (p *pspk) newRequest(method string, body, options interface{}) (*http.Reque
 }
 
 func (p *pspk) doRequest(req *http.Request, v interface{}) error {
-
-	http.Get("https://pspk.now.sh")
-	// resp, err := p.client.Do(req)
-	// if err != nil {
-	// return err
-	// }
-	// defer resp.Body.Close()
-	// err = checkResponseError(resp)
-	// if err != nil {
-	// return err
-	// }
-	// if v != nil {
-	// if err := json.NewDecoder(resp.Body).Decode(&v); err != nil {
-	// return err
-	// }
-	// }
+	resp, err := p.client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	err = checkResponseError(resp)
+	if err != nil {
+		return err
+	}
+	if v != nil {
+		if err := json.NewDecoder(resp.Body).Decode(&v); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

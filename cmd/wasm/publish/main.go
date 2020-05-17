@@ -3,6 +3,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"fmt"
 	"os"
 	"syscall/js"
@@ -30,6 +31,12 @@ func main() {
 		js.Global().Set("PublishError", result.Error())
 		return
 	}
+
+	k, _ := fs.Read("/"+name, "pub.bin")
+	js.Global().Set("pub_key", base64.StdEncoding.EncodeToString(k))
+
+	k, _ = fs.Read("/"+name, "key.bin")
+	js.Global().Set("priv_key", base64.StdEncoding.EncodeToString(k))
 
 	js.Global().Set("PublishError", "")
 }
