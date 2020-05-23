@@ -31,9 +31,11 @@ type Key struct {
 }
 
 type GetAllOptions struct {
-	Output  string `url:"output,omitempty"`
-	LastKey string `url:"last_key,omitempty"`
-	Limit   int    `url:"limit,omitempty"`
+	NameKey   string `url:"name_key,omitempty"`
+	NameRegex string `url:"name_regex,omitempty"`
+	Output    string `url:"output,omitempty"`
+	LastKey   string `url:"last_key,omitempty"`
+	Limit     int    `url:"limit,omitempty"`
 }
 
 type Link struct {

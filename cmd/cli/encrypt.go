@@ -45,7 +45,7 @@ func EphemeralEncrypt() cli.Command {
 			pubName := c.Args()[0]
 			message := c.Args()[1:]
 			link := c.Bool("link")
-
+<<<<<<< HEAD
 			return pcli.EphemeralEncrypt(strings.Join(message, " "), pubName, link)
 		},
 	}

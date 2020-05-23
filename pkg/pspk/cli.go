@@ -6,9 +6,12 @@ import (
 	"io"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/sah4ez/pspk/pkg/config"
+	environment "github.com/sah4ez/pspk/pkg/evnironment"
 	"github.com/sah4ez/pspk/pkg/keys"
 	"github.com/sah4ez/pspk/pkg/utils"
+	"github.com/skip2/go-qrcode"
 )
 
 // TODO split to Decrypter, Encryper and etc.
@@ -26,6 +29,7 @@ type CLI interface {
 
 	Secret(name, pubName string) (err error)
 	Publish(name string) (err error)
+	PublishAndGenerateQR(name string, path string) (err error)
 
 	Group(name string) (err error)
 	StartGroup(name, groupName string, names ...string) (err error)
@@ -334,6 +338,43 @@ func (p *PSPKcli) Publish(name string) (err error) {
 
 	fmt.Fprintln(p.out, "Generate key pair on x25519")
 	return nil
+}
+
+func (p *PSPKcli) PublishAndGenerateQR(name string, qrPath string) (err error) {
+	if err = p.Publish(name); err != nil {
+		return
+	}
+
+	path, err := p.loadPath(name)
+	if err != nil {
+		return fmt.Errorf("load path to keys: %w", err)
+	}
+
+	pub, err := p.fs.Read(path, "pub.bin")
+	if err != nil {
+		return err
+	}
+
+	priv, err := p.fs.Read(path, "key.bin")
+	if err != nil {
+		return err
+	}
+
+	if qrPath != "" {
+		qrPath = fmt.Sprintf("%s/%s.png", qrPath, name)
+	} else {
+		qrPath = fmt.Sprintf("%s/%[2]s/", environment.LoadDataPath(), name)
+	}
+	err = qrcode.WriteFile(string(pub[:]), qrcode.Medium, 256, qrPath+"pub.png")
+	if err != nil {
+		return errors.Wrap(err, "can not create qrcode pub file")
+	}
+	err = qrcode.WriteFile(string(priv[:]), qrcode.Medium, 256, qrPath+"key.png")
+	if err != nil {
+		return errors.Wrap(err, "can not create qrcode key file")
+	}
+
+	return
 }
 
 func (p *PSPKcli) Group(name string) (err error) {

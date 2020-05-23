@@ -11,6 +11,16 @@ func Publish() cli.Command {
 		Description: "Generate x25519 pair to pspk",
 		Usage:       "--name <NAME> publish",
 		Aliases:     []string{"p"},
+		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name:  "qr",
+				Usage: "Generate QR",
+			},
+			&cli.StringFlag{
+				Name:  "path",
+				Usage: "Specify path",
+			},
+		},
 		Action: func(c *cli.Context) error {
 			name := c.GlobalString("name")
 			return pcli.Publish(name)

@@ -80,6 +80,8 @@ func main() {
 		EphemeralEncrypGroup(),
 		DecryptGroup(),
 		EphemeralDecryptGroup(),
+		Sign(),
+		Verify(),
 	}
 
 	err = app.Run(os.Args)
