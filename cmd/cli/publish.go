@@ -23,6 +23,10 @@ func Publish() cli.Command {
 		},
 		Action: func(c *cli.Context) error {
 			name := c.GlobalString("name")
+			if c.GlobalBool("qr") {
+				qrPath := c.GlobalString("path")
+				return pcli.PublishAndGenerateQR(name, qrPath)
+			}
 			return pcli.Publish(name)
 		},
 	}

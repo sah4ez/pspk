@@ -27,10 +27,14 @@ func (fs FileStorage) Write(path, name string, data []byte) error {
 }
 
 func (fs FileStorage) Read(path, name string) ([]byte, error) {
-	return readPath(path + "/" + name)
+	return ReadPath(path + "/" + name)
 }
 
-func readPath(path string) ([]byte, error) {
+func Read(path, name string) ([]byte, error) {
+	return ReadPath(path + "/" + name)
+}
+
+func ReadPath(path string) ([]byte, error) {
 	f, err := os.OpenFile(path, os.O_RDONLY, 0766)
 	if err != nil {
 		return nil, err

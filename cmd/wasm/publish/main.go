@@ -15,9 +15,9 @@ import (
 func main() {
 	fmt.Println("wasm module loaded")
 
-	api := pspk.New("https://pspk.now.sh/")
+	api := pspk.New("http://127.0.0.1:8080/")
 	fs := utils.NewWasmStorage()
-	cli := pspk.NewPSPKcli(api, nil, "/", "https://pspk.now.sh", os.Stdout, fs)
+	cli := pspk.NewPSPKcli(api, nil, "/", "http://127.0.0.1:8080", os.Stdout, fs)
 
 	var name string
 
