@@ -16,11 +16,9 @@ function callGo(name) {
 	});
 }
 
-function ToBase64(u8) {
-	return btoa(String.fromCharCode.apply(null, u8));
-}
-
-var publish_name = "html-key";
 function publishKey() {
 	callGo("./publish");
+	// console.log(name);
+	// console.log(pub_key);
+	// console.log(priv_key);
 }
