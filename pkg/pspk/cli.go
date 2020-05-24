@@ -362,11 +362,11 @@ func (p *PSPKcli) PublishAndGenerateQR(name string, qrPath string) (err error) {
 		return errors.Wrap(err, "can not read key.bin")
 	}
 
-	if qrPath != "" {
-		qrPath = fmt.Sprintf("%s/%s.png", qrPath, name)
-	} else {
-		qrPath = fmt.Sprintf("%s/%[2]s/", environment.LoadDataPath(), name)
+	if qrPath == "" {
+		qrPath = environment.LoadDataPath()
 	}
+	qrPath = fmt.Sprintf("%s/%s/", qrPath, name)
+
 	err = qrcode.WriteFile(string(pub[:]), qrcode.Medium, 256, qrPath+"pub.png")
 	if err != nil {
 		return errors.Wrap(err, "can not create qrcode pub file")
