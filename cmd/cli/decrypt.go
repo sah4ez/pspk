@@ -1,12 +1,7 @@
 package main
 
 import (
-	"encoding/base64"
-	"fmt"
-
 	"github.com/pkg/errors"
-	"github.com/sah4ez/pspk/pkg/keys"
-	"github.com/sah4ez/pspk/pkg/utils"
 	"github.com/urfave/cli"
 )
 
@@ -26,47 +21,17 @@ func Decrypt() cli.Command {
 			pubName := c.Args().Get(0)
 			var message string
 			if link := c.String("link"); len(link) > 0 {
-				m, err := api.DownloadByLink(link)
-				if err != nil {
-					return errors.Wrap(err, "download by link failed")
+				m := api.DownloadByLink(link)
+				if m.Error != nil {
+					return errors.Wrap(m.Error, "download by link failed")
 				}
-				message = m
+				message = m.Data
 			} else {
 				message = c.Args().Get(1)
 			}
 			name := c.GlobalString("name")
-			if name == "" {
-				if cfg.CurrentName == "" {
-					return fmt.Errorf("empty current name, set to config or use --name")
-				}
-				name = cfg.CurrentName
-			}
-			path = path + "/" + name
 
-			priv, err := utils.Read(path, "key.bin")
-			if err != nil {
-				return errors.Wrap(err, "can not read key.bin")
-			}
-			pub, err := api.Load(pubName)
-			if err != nil {
-				return errors.Wrap(err, "can not load the public name")
-			}
-			chain := keys.Secret(priv, pub)
-			messageKey, err := keys.LoadMaterialKey(chain)
-			if err != nil {
-				return errors.Wrap(err, "can not load message key")
-			}
-			bytesMessage, err := base64.StdEncoding.DecodeString(message)
-			if err != nil {
-				return fmt.Errorf("bytesMessage has error: %s", err.Error())
-			}
-
-			b, err := utils.Decrypt(messageKey[64:], messageKey[:32], bytesMessage)
-			if err != nil {
-				return fmt.Errorf("decrypt has error: %s", err.Error())
-			}
-			fmt.Println(string(b))
-			return nil
+			return pcli.Decrypt(name, message, pubName)
 		},
 	}
 }
@@ -86,43 +51,16 @@ func EphemeralDecrypt() cli.Command {
 		Action: func(c *cli.Context) error {
 			var message string
 			if link := c.String("link"); len(link) > 0 {
-				m, err := api.DownloadByLink(link)
-				if err != nil {
-					return errors.Wrap(err, "download by link failed")
+				m := api.DownloadByLink(link)
+				if m.Error != nil {
+					return errors.Wrap(m.Error, "download by link failed")
 				}
-				message = m
+				message = m.Data
 			} else {
 				message = c.Args().Get(0)
 			}
 			name := c.GlobalString("name")
-			if name == "" {
-				if cfg.CurrentName == "" {
-					return fmt.Errorf("empty current name, set to config or use --name")
-				}
-				name = cfg.CurrentName
-			}
-			path = path + "/" + name
-
-			priv, err := utils.Read(path, "key.bin")
-			if err != nil {
-				return errors.Wrap(err, "can not read key.bin")
-			}
-			bytesMessage, err := base64.StdEncoding.DecodeString(message)
-			if err != nil {
-				return errors.Wrap(err, "error when decode in base64 the message")
-			}
-			chain := keys.Secret(priv, bytesMessage[:32])
-			messageKey, err := keys.LoadMaterialKey(chain)
-			if err != nil {
-				return errors.Wrap(err, "can not load message key")
-			}
-
-			b, err := utils.Decrypt(messageKey[64:], messageKey[:32], bytesMessage[32:])
-			if err != nil {
-				return errors.Wrap(err, "can not decryp message key")
-			}
-			fmt.Println(string(b))
-			return nil
+			return pcli.EphemeralDecrypt(name, message)
 		},
 	}
 }
@@ -142,47 +80,17 @@ func DecryptGroup() cli.Command {
 			groupName := c.Args().Get(0)
 			var message string
 			if link := c.String("link"); len(link) > 0 {
-				m, err := api.DownloadByLink(link)
-				if err != nil {
-					return errors.Wrap(err, "download by link failed")
+				m := api.DownloadByLink(link)
+				if m.Error != nil {
+					return errors.Wrap(m.Error, "download by link failed")
 				}
-				message = m
+				message = m.Data
 			} else {
 				message = c.Args().Get(1)
 			}
 			name := c.GlobalString("name")
-			if name == "" {
-				if cfg.CurrentName == "" {
-					return fmt.Errorf("empty current name, set to config or use --name")
-				}
-				name = cfg.CurrentName
-			}
-			path = path + "/" + name
 
-			priv, err := utils.Read(path, groupName+".secret")
-			if err != nil {
-				return errors.Wrap(err, "can not read group secret")
-			}
-			pub, err := api.Load(groupName)
-			if err != nil {
-				return errors.Wrap(err, "can not load group name")
-			}
-			chain := keys.Secret(priv, pub)
-			messageKey, err := keys.LoadMaterialKey(chain)
-			if err != nil {
-				return errors.Wrap(err, "can not load message key")
-			}
-			bytesMessage, err := base64.StdEncoding.DecodeString(message)
-			if err != nil {
-				return errors.Wrap(err, "can not decode in base64 the message")
-			}
-
-			b, err := utils.Decrypt(messageKey[64:], messageKey[:32], bytesMessage)
-			if err != nil {
-				return errors.Wrap(err, "can not decrypt message")
-			}
-			fmt.Println(string(b))
-			return nil
+			return pcli.DecryptGroup(name, message, groupName)
 		},
 	}
 }
@@ -202,43 +110,16 @@ func EphemeralDecryptGroup() cli.Command {
 			groupName := c.Args().Get(0)
 			var message string
 			if link := c.String("link"); len(link) > 0 {
-				m, err := api.DownloadByLink(link)
-				if err != nil {
-					return errors.Wrap(err, "download by link failed")
+				m := api.DownloadByLink(link)
+				if m.Error != nil {
+					return errors.Wrap(m.Error, "download by link failed")
 				}
-				message = m
+				message = m.Data
 			} else {
 				message = c.Args().Get(1)
 			}
 			name := c.GlobalString("name")
-			if name == "" {
-				if cfg.CurrentName == "" {
-					return fmt.Errorf("empty current name, set to config or use --name")
-				}
-				name = cfg.CurrentName
-			}
-			path = path + "/" + name
-
-			priv, err := utils.Read(path, groupName+".secret")
-			if err != nil {
-				return errors.Wrap(err, "can not read group secret")
-			}
-			bytesMessage, err := base64.StdEncoding.DecodeString(message)
-			if err != nil {
-				return errors.Wrap(err, "can not decode in base64 the message")
-			}
-			chain := keys.Secret(priv, bytesMessage[:32])
-			messageKey, err := keys.LoadMaterialKey(chain)
-			if err != nil {
-				return errors.Wrap(err, "can not load keys")
-			}
-
-			b, err := utils.Decrypt(messageKey[64:], messageKey[:32], bytesMessage[32:])
-			if err != nil {
-				return errors.Wrap(err, "can not decrypt message")
-			}
-			fmt.Println(string(b))
-			return nil
+			return pcli.EphemeralDecryptGroup(name, message, groupName)
 		},
 	}
 }

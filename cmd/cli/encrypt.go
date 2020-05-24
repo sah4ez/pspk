@@ -1,14 +1,8 @@
 package main
 
 import (
-	"encoding/base64"
-	"fmt"
 	"strings"
 
-	"github.com/pkg/errors"
-
-	"github.com/sah4ez/pspk/pkg/keys"
-	"github.com/sah4ez/pspk/pkg/utils"
 	"github.com/urfave/cli"
 )
 
@@ -28,36 +22,9 @@ func Encrypt() cli.Command {
 			pubName := c.Args()[0]
 			message := c.Args()[1:]
 			name := c.GlobalString("name")
-			if name == "" {
-				if cfg.CurrentName == "" {
-					return errors.New("empty current name, set to config or use --name")
-				}
-				name = cfg.CurrentName
-			}
-			path = path + "/" + name
+			link := c.Bool("link")
 
-			priv, err := utils.Read(path, "key.bin")
-			if err != nil {
-				return errors.Wrap(err, "can not read key.bin")
-			}
-			pub, err := api.Load(pubName)
-			if err != nil {
-				return errors.Wrap(err, "can not load public name")
-			}
-			chain := keys.Secret(priv, pub)
-
-			messageKey, err := keys.LoadMaterialKey(chain)
-			if err != nil {
-				return errors.Wrap(err, "can not load message key")
-			}
-
-			b, err := utils.Encrypt(messageKey[64:], messageKey[:32], []byte(strings.Join(message, " ")))
-			if err != nil {
-				return errors.Wrap(err, "can not encrypt message")
-			}
-			data := base64.StdEncoding.EncodeToString(b)
-			fmt.Fprintln(out, data)
-			return link(c.Bool("link"), data)
+			return pcli.Encrypt(name, strings.Join(message, " "), pubName, link)
 		},
 	}
 }
@@ -77,30 +44,8 @@ func EphemeralEncrypt() cli.Command {
 		Action: func(c *cli.Context) error {
 			pubName := c.Args()[0]
 			message := c.Args()[1:]
-
-			pubEphemeral, privEphemeral, err := keys.GenerateDH()
-			if err != nil {
-				return errors.Wrap(err, "can not generate keys")
-			}
-			pub, err := api.Load(pubName)
-			if err != nil {
-				return errors.Wrap(err, "can not load public name")
-			}
-			chain := keys.Secret(privEphemeral[:], pub)
-
-			messageKey, err := keys.LoadMaterialKey(chain)
-			if err != nil {
-				return errors.Wrap(err, "can not load keys")
-			}
-
-			b, err := utils.Encrypt(messageKey[64:], messageKey[:32], []byte(strings.Join(message, " ")))
-			if err != nil {
-				return errors.Wrap(err, "can not encrypt message")
-			}
-			m := append(pubEphemeral[:], b...)
-			data := base64.StdEncoding.EncodeToString(m)
-			fmt.Fprintln(out, data)
-			return link(c.Bool("link"), data)
+			link := c.Bool("link")
+			return pcli.EphemeralEncrypt(strings.Join(message, " "), pubName, link)
 		},
 	}
 }
@@ -121,35 +66,9 @@ func EncryptGroup() cli.Command {
 			groupName := c.Args()[0]
 			message := c.Args()[1:]
 			name := c.GlobalString("name")
-			if name == "" {
-				if cfg.CurrentName == "" {
-					return errors.New("empty current name, set to config or use --name")
-				}
-				name = cfg.CurrentName
-			}
-			path = path + "/" + name
+			link := c.Bool("link")
 
-			priv, err := utils.Read(path, groupName+".secret")
-			if err != nil {
-				return errors.Wrap(err, "can not read group name")
-			}
-			pub, err := api.Load(groupName)
-			if err != nil {
-				return errors.Wrap(err, "api load can not group name")
-			}
-			chain := keys.Secret(priv, pub)
-
-			messageKey, err := keys.LoadMaterialKey(chain)
-			if err != nil {
-				return errors.Wrap(err, "can not load keys")
-			}
-
-			b, err := utils.Encrypt(messageKey[64:], messageKey[:32], []byte(strings.Join(message, " ")))
-			if err != nil {
-				return errors.Wrap(err, "can not Encrypt message")
-			}
-			fmt.Fprintln(out, base64.StdEncoding.EncodeToString(b))
-			return nil
+			return pcli.EncryptGroup(name, strings.Join(message, " "), groupName, link)
 		},
 	}
 }
@@ -168,51 +87,10 @@ func EphemeralEncrypGroup() cli.Command {
 		Action: func(c *cli.Context) error {
 			groupName := c.Args()[0]
 			message := c.Args()[1:]
-
 			name := c.GlobalString("name")
-			if name == "" {
-				if cfg.CurrentName == "" {
-					return errors.New("empty current name, set to config or use --name")
-				}
-				name = cfg.CurrentName
-			}
-			path = path + "/" + name
+			link := c.Bool("link")
 
-			priv, err := utils.Read(path, groupName+".secret")
-			if err != nil {
-				return errors.Wrap(err, "can not read group name")
-			}
-
-			pubEphemeral, _, err := keys.GenerateDH()
-			if err != nil {
-				return errors.Wrap(err, "can not generate keys")
-			}
-			chain := keys.Secret(priv[:], pubEphemeral[:])
-
-			messageKey, err := keys.LoadMaterialKey(chain)
-			if err != nil {
-				return errors.Wrap(err, "can not load keys")
-			}
-
-			b, err := utils.Encrypt(messageKey[64:], messageKey[:32], []byte(strings.Join(message, " ")))
-			if err != nil {
-				return errors.Wrap(err, "can not encrypt message")
-			}
-			m := append(pubEphemeral[:], b...)
-			data := base64.StdEncoding.EncodeToString(m)
-			fmt.Fprintln(out, data)
-			return link(c.Bool("link"), data)
+			return pcli.EphemeralEncrypGroup(name, strings.Join(message, " "), groupName, link)
 		},
 	}
-}
-
-func link(isLink bool, data string) error {
-	if isLink {
-		id, err := api.GenerateLink(data)
-		if err != nil {
-			return err
-		}
-		fmt.Fprintln(out, baseURL+"/?link="+id)
-	}
-	return nil
 }

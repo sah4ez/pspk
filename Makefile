@@ -1,11 +1,12 @@
 VERSION=0.1.16
 NAME=pspk
 GIT_REV?=$(shell git rev-parse --short HEAD)
-LDFLAGS=-ldflags "-X main.Version=$(VERSION) -X main.Hash=$(GIT_REV) -X main.BuildDate=$(BUILD_DATE)"
+LDFLAGS=-ldflags "-X main.Version=$(VERSION) -X main.Hash=$(GIT_REV) -X main.BuildDate=$(BUILD_DATE) -X main.ednpoint=$(ENDPOINT)"
 GO=GO111MOUDLE=on go
 SIGNATORY=pspk-sign
 
 
+.PHONY: build
 build:
 	VERSION=$(VERSION)-dev $(GO) build $(LDFLAGS) -o bin/${NAME} ./cmd/cli/
 
@@ -21,8 +22,27 @@ release: clean
 	GOOS=linux   GOARCH=arm64 $(GO) build $(LDFLAGS) -o _build/$(NAME)-srv-$(VERSION)-linux-arm64 ./cmd/server
 	cd _build; sha256sum * > sha256sums.txt
 
+wasm_exec.js: ./web_wasm/wasm_exec.js
+	cp "${GOROOT}/misc/wasm/wasm_exec.js" ./web_wasm/
+
+.PHONY: wasm
+wasm: wasm_exec.js
+	env GOOS=js GOARCH=wasm go build ${LDFLAGS} -o ./bin/wasm/${NAME}.wasm ./cmd/wasm/
+	env GOOS=js GOARCH=wasm go build ${LDFLAGS} -o ./bin/wasm/publish ./cmd/wasm/publish/.
+	env GOOS=js GOARCH=wasm go build ${LDFLAGS} -o ./bin/wasm/edecrypt ./cmd/wasm/edecrypt/.
+	env GOOS=js GOARCH=wasm go build ${LDFLAGS} -o ./bin/wasm/eencrypt ./cmd/wasm/eencrypt/.
+	env GOOS=js GOARCH=wasm go build ${LDFLAGS} -o ./bin/wasm/keys ./cmd/wasm/keys/.
+
+local-web: wasm
+ifeq ("$(ENDPOINT)", "") 
+$(error ENDPOINT variable not set, for local set "http://127.0.0.1:8080")
+endif
+	cp ./bin/wasm/* ./web_wasm/
+
+.PHONY: clean
 clean:
 	rm -rf _build
 
+.PHONY: release_web
 release_web:
 	scp -r ./web/*  ${FREECONTENT_SPACE}:/var/www/pspk/

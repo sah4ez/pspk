@@ -259,3 +259,28 @@ Use `config.json` file for saving configuration:
 ```
 
 Also pspk use `$XDG_DATA_HOME` for saving appication data ro default value `$HOME/.local/share/pspk`
+
+
+## local stand
+
+Build server:
+```bash
+go build -o ./bin/src ./cmd/server/.
+```
+
+Run local instance mongodb v4 with TLS:
+```bash
+sh ./mongo.start.sh
+```
+
+Start http server:
+```bash
+env DB_USER=root DB_PASS=root DB_HOSTS=localhost:27017 ./bin/srv -local
+```
+
+And now you can build wasm:
+```
+make local-web
+```
+
+And open files from `./web_wasm/` in your browser and test on local machine.

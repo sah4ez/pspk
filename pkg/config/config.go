@@ -1,7 +1,10 @@
+// !build js,wasm
+
 package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 
 	"github.com/sah4ez/pspk/pkg/evnironment"
@@ -17,14 +20,15 @@ var (
 	path       = ""
 )
 
-func init() {
+func (c *Config) Init() {
 	path = environment.LoadConfigPath()
 
 	os.OpenFile(path+"/"+configName, os.O_RDONLY|os.O_CREATE, 0666)
 }
 
 func Load() (c *Config, err error) {
-	b, err := utils.Read(path, configName)
+	fs := utils.FileStorage{}
+	b, err := fs.Read(path, configName)
 	if err != nil {
 		return nil, err
 	}
@@ -39,13 +43,23 @@ func Load() (c *Config, err error) {
 }
 
 func (c *Config) Save() (err error) {
+	fs := utils.FileStorage{}
 	b, err := json.Marshal(c)
 	if err != nil {
 		return
 	}
-	err = utils.Write(path, configName, b)
+	err = fs.Write(path, configName, b)
 	if err != nil {
 		return
 	}
 	return
+}
+
+func (c *Config) LoadCurrentName(name string) (string, error) {
+	if name == "" {
+		if c.CurrentName == "" {
+			return "", fmt.Errorf("empty current name, set to config or use --name")
+		}
+	}
+	return c.CurrentName, nil
 }

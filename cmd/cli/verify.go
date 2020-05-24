@@ -1,12 +1,10 @@
 package main
 
 import (
-	"encoding/base64"
 	"fmt"
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/sah4ez/pspk/pkg/keys"
 	"github.com/sah4ez/pspk/pkg/utils"
 	"github.com/urfave/cli"
 )
@@ -42,29 +40,7 @@ func Verify() cli.Command {
 				data = []byte(strings.Join(message, " "))
 			}
 
-			pub, err := api.Load(keyName)
-			if err != nil {
-				return errors.Wrap(err, "can not load public name")
-			}
-
-			pubArray := utils.Slice2Array32(pub)
-
-			signatureBinary, err := base64.StdEncoding.DecodeString(signature)
-			if err != nil {
-				return errors.Wrap(err, "can decode signature from base64")
-			}
-			signatureArrya := utils.Slice2Array64(signatureBinary)
-
-			verify := keys.Verify(pubArray, data, &signatureArrya)
-			fmt.Fprintln(out, verifyMessage(signature, verify))
-			return nil
+			return pcli.Verify(keyName, signature, data)
 		},
 	}
-}
-
-func verifyMessage(signature string, verify bool) string {
-	if verify {
-		return fmt.Sprintf("Signature %s is valid.", signature)
-	}
-	return fmt.Sprintf("Signature %s is NOT valid.", signature)
 }

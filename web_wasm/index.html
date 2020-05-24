@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>About!</title>
+	<script src="wasm_exec.js"></script>
+	<script src="pspk.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+          integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+<body>
+
+<ul class="nav">
+	<li class="nav-item">
+		<a class="nav-link active" href="#">About</a>
+	</li>
+	<li class="nav-item">
+		<a class="nav-link active" href="./encrypt.html">Encrypt</a>
+	</li>
+	<li class="nav-item">
+		<a class="nav-link active" href="./qrencrypt.html">QR Encrypt</a>
+	</li>
+	<li class="nav-item">
+		<a class="nav-link" href="./decrypt.html">Decrypt</a>
+	</li>
+	<li class="nav-item">
+		<a class="nav-link active" href="./qrdecrypt.html">QR Decrypt</a>
+	</li>
+	<li class="nav-item">
+		<a class="nav-link" href="./keys.html">Keys</a>
+	</li>
+</ul>
+<div class="container d-flex justify-content-center">
+    <div class="col">
+        <h3 class="d-flex justify-content-center">About</h3>
+        <div class="form-group">
+			Application for encryption/decryption, sign/verify any digital information.
+			Also free storage for your public parts of ECDH x25519 keys.
+        </div>
+        <div class="form-group">
+            <label for="pub_name">Your Public name</label>
+            <input type="text" class="form-control" id="pub_name" aria-label="Name Public Key recipient">
+        </div>
+        <div class="form-group">
+            <label for="pub_key">Public key</label>
+            <input type="text" class="form-control" id="pub_key">
+        </div>
+        <div class="form-group">
+            <label class="alert-danger" for="priv_key">Private key, save it!</label>
+            <input type="text" class="form-control" id="priv_key">
+        </div>
+		<div class="form-group custom-control custom-switch">
+		  <input type="checkbox" class="custom-control-input" id="qr_codes" checked>
+		  <label class="custom-control-label" for="qr_codes">Generate QR Codes</label>
+		</div>
+        <div class="form-group">
+            <input type="button" class="btn btn-primary" value="Publish" id="enc" onclick="publishKey()">
+            <input type="button" class="btn btn-primary" value="Copy" id="copy" onclick="copyPrivateKey()">
+			<input type="button" class="btn btn-primary" value="Download" id="qr_dowload" onclick="downloadQRCodes()">
+        </div>
+		<label class="alert-danger" for="qr_priv">QR Private key, save it!</label>
+        <div class="form-group">
+			<!-- <canvas id="qr_priv" onclick="downloadQRCode('qr_priv')"></canvas> -->
+			<canvas id="qr_priv"></canvas>
+        </div>
+		<label for="qr_pub">QR Public kye</label>
+        <div class="form-group">
+			<!-- <canvas id="qr_pub" onclick="downloadQRCode('qr_pub')"></canvas> -->
+		    <canvas id="qr_pub"></canvas>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+        crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+        crossorigin="anonymous"></script>
+</body>
+</html>
