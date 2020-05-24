@@ -7,7 +7,6 @@ import (
 	"crypto/sha512"
 	"io"
 
-	"github.com/agl/ed25519"
 	"github.com/agl/ed25519/edwards25519"
 	"golang.org/x/crypto/curve25519"
 	ecdh "golang.org/x/crypto/ed25519"
@@ -154,7 +153,7 @@ func Verify(publicKey [32]byte, message []byte, signature *[64]byte) bool {
 	A_ed[31] |= signature[63] & 0x80
 	signature[63] &= 0x7F
 
-	return ed25519.Verify(&A_ed, message, signature)
+	return ecdh.Verify(A_ed[:], message, signature[:])
 }
 
 func LoadMaterialKey(chain []byte) ([]byte, error) {
