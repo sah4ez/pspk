@@ -18,7 +18,16 @@ function callGo(name) {
 
 function publishKey() {
 	callGo("./publish");
-	// console.log(name);
-	// console.log(pub_key);
-	// console.log(priv_key);
+}
+
+function decryptText() {
+	callGo("./edecrypt");
+}
+
+function encryptText() {
+	callGo("./eencrypt");
+}
+
+function findByName() {
+	callGo("./keys");
 }

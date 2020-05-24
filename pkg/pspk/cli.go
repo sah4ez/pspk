@@ -104,9 +104,9 @@ func (p *PSPKcli) EphemeralDecrypt(name, message string) (err error) {
 
 	b, err := utils.Decrypt(messageKey[64:], messageKey[:32], bytesMessage[32:])
 	if err != nil {
-		return errors.Wrap(err, "can not decryp message key")
+		return errors.Wrap(err, "can not decrypt message key")
 	}
-	fmt.Println(string(b))
+	fmt.Fprint(p.out, string(b))
 	return nil
 
 }
@@ -223,7 +223,7 @@ func (p *PSPKcli) EphemeralEncrypt(message, pubName string, link bool) (err erro
 	}
 	m := append(pubEphemeral[:], b...)
 	data := base64.StdEncoding.EncodeToString(m)
-	fmt.Fprintln(p.out, data)
+	fmt.Fprint(p.out, data)
 
 	return p.generateLink(link, data)
 }

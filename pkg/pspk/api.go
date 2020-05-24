@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -239,7 +240,12 @@ func (p *pspk) newRequest(method string, body, options interface{}) (*http.Reque
 			return nil, err
 		}
 	}
-	req, err := http.NewRequest(method, u.String(), bytes.NewBuffer(js))
+
+	var bodyReader io.Reader = nil
+	if js != nil {
+		bodyReader = bytes.NewBuffer(js)
+	}
+	req, err := http.NewRequest(method, u.String(), bodyReader)
 	if err != nil {
 		return nil, err
 	}

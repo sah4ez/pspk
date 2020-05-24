@@ -29,6 +29,9 @@ wasm_exec.js: ./web_wasm/wasm_exec.js
 wasm: wasm_exec.js
 	env GOOS=js GOARCH=wasm go build ${LDFLAGS} -o ./bin/wasm/${NAME}.wasm ./cmd/wasm/
 	env GOOS=js GOARCH=wasm go build ${LDFLAGS} -o ./bin/wasm/publish ./cmd/wasm/publish/.
+	env GOOS=js GOARCH=wasm go build ${LDFLAGS} -o ./bin/wasm/edecrypt ./cmd/wasm/edecrypt/.
+	env GOOS=js GOARCH=wasm go build ${LDFLAGS} -o ./bin/wasm/eencrypt ./cmd/wasm/eencrypt/.
+	env GOOS=js GOARCH=wasm go build ${LDFLAGS} -o ./bin/wasm/keys ./cmd/wasm/keys/.
 
 local-web: wasm
 	cp ./bin/wasm/* ./web_wasm/
