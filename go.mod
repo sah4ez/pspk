@@ -9,6 +9,7 @@ require (
 	github.com/google/go-querystring v1.0.0
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/pkg/errors v0.8.1
+	github.com/siongui/godom v0.0.0-20200413172552-63506b972722
 	github.com/skip2/go-qrcode v0.0.0-20191027152451-9434209cb086
 	github.com/urfave/cli v1.20.0
 	golang.org/x/crypto v0.0.0-20191219195013-becbf705a915

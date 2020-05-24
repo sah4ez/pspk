@@ -3,8 +3,8 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
+	"strings"
 	"syscall/js"
 
 	"github.com/sah4ez/pspk/pkg/pspk"
@@ -27,14 +27,22 @@ func main() {
 		return
 	}
 
-	bytes, err := json.Marshal(result.Keys)
-	if err != nil {
-		js.Global().Set("PublishError", err.Error())
-		fmt.Println("marshal", err.Error())
-		return
+	tables := js.Global().Get("document").Call("getElementsByClassName", "table")
+	tbody := tables.Get("0").Get("lastElementChild")
+
+	var row = `
+<tr>
+	<th scope="row">%s</th>
+	<td>%s</td>
+	<td>%s</td>
+</tr>
+	`
+	rows := make([]string, len(result.Keys))
+
+	for i, key := range result.Keys {
+		rows[i] = fmt.Sprintf(row, key.ID, key.Name, key.Key)
 	}
-	fmt.Println(string(bytes))
-	// js.Global().Get("table").Set("value", string(bytes))
+	tbody.Set("innerHTML", strings.Join(rows, "\n"))
 
 	js.Global().Set("PublishError", "")
 }
