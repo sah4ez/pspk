@@ -13,12 +13,16 @@ import (
 	"github.com/skip2/go-qrcode"
 )
 
+var (
+	ednpoint = "http://127.0.0.1:8080"
+)
+
 func main() {
 	fmt.Println("wasm module loaded")
 
-	api := pspk.New("http://127.0.0.1:8080/")
+	api := pspk.New(ednpoint)
 	fs := utils.NewWasmStorage()
-	cli := pspk.NewPSPKcli(api, nil, "/", "https://127.0.0.1:8080", os.Stdout, fs)
+	cli := pspk.NewPSPKcli(api, nil, "/", ednpoint, os.Stdout, fs)
 
 	var (
 		name   string

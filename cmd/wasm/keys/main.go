@@ -10,6 +10,10 @@ import (
 	"github.com/sah4ez/pspk/pkg/pspk"
 )
 
+var (
+	ednpoint = "http://127.0.0.1:8080"
+)
+
 func main() {
 	fmt.Println("wasm module loaded")
 
@@ -17,7 +21,10 @@ func main() {
 
 	name = js.Global().Get("pub_name").Get("value").String()
 
-	api := pspk.New("http://127.0.0.1:8080/?name_regex=" + name)
+	if name == "" {
+		js.Global().Get("pub_name").Set("value", "Enter name")
+	}
+	api := pspk.New(ednpoint + "/?name_regex=" + name)
 	options := pspk.GetAllOptions{}
 	result := api.GetAll(options)
 

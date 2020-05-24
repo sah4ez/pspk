@@ -1,7 +1,7 @@
 VERSION=0.1.16
 NAME=pspk
 GIT_REV?=$(shell git rev-parse --short HEAD)
-LDFLAGS=-ldflags "-X main.Version=$(VERSION) -X main.Hash=$(GIT_REV) -X main.BuildDate=$(BUILD_DATE)"
+LDFLAGS=-ldflags "-X main.Version=$(VERSION) -X main.Hash=$(GIT_REV) -X main.BuildDate=$(BUILD_DATE) -X main.ednpoint=$(ENDPOINT)"
 GO=GO111MOUDLE=on go
 SIGNATORY=pspk-sign
 
@@ -34,6 +34,9 @@ wasm: wasm_exec.js
 	env GOOS=js GOARCH=wasm go build ${LDFLAGS} -o ./bin/wasm/keys ./cmd/wasm/keys/.
 
 local-web: wasm
+ifeq ("$(ENDPOINT)", "") 
+$(error ENDPOINT variable not set, for local set "http://127.0.0.1:8080")
+endif
 	cp ./bin/wasm/* ./web_wasm/
 
 .PHONY: clean
